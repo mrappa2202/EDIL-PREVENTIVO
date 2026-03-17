@@ -188,3 +188,12 @@
         display: contents !important;
     }
 }
+
+/* Modal overlay fix */
+[data-radix-portal] {
+    z-index: 9999 !important;
+}
+
+[data-radix-dialog-overlay] {
+    pointer-events: auto !important;
+}
