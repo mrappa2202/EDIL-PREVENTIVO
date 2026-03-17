@@ -1,34 +1,107 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* App-specific styles */
+
+/* Sidebar navigation active state */
+.nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground transition-colors duration-200;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
+.nav-item:hover {
+    @apply bg-surface-highlight text-foreground;
+}
+
+.nav-item.active {
+    @apply bg-primary text-primary-foreground;
+}
+
+/* Data table styles */
+.data-table {
+    @apply w-full;
+}
+
+.data-table th {
+    @apply text-left text-xs font-medium uppercase tracking-wider text-muted-foreground py-3 px-4 border-b;
+}
+
+.data-table td {
+    @apply py-4 px-4 border-b border-border/50;
+}
+
+.data-table tr:hover {
+    @apply bg-surface;
+}
+
+/* Quote builder specific */
+.quote-item-row {
+    @apply grid grid-cols-12 gap-2 items-start py-3 px-2 border-b border-border/30;
+}
+
+.quote-item-row:hover {
+    @apply bg-surface;
+}
+
+/* Form field groups */
+.form-group {
+    @apply space-y-2;
+}
+
+.form-group label {
+    @apply text-sm font-medium text-foreground;
+}
+
+/* Print styles for PDF preview */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
     }
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Loading spinner */
+.spinner {
+    @apply animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full;
 }
 
-.App-link {
-    color: #61dafb;
+/* Empty state */
+.empty-state {
+    @apply flex flex-col items-center justify-center py-16 text-center;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.empty-state-icon {
+    @apply w-16 h-16 text-muted-foreground/30 mb-4;
+}
+
+/* Stats card */
+.stat-card {
+    @apply bg-card rounded-xl p-6 border shadow-sm transition-all duration-200 hover:shadow-md;
+}
+
+.stat-card-value {
+    @apply text-3xl font-bold font-heading text-foreground;
+}
+
+.stat-card-label {
+    @apply text-sm text-muted-foreground mt-1;
+}
+
+/* Badge variants for status */
+.badge-status {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+/* Input focus rings */
+input:focus, select:focus, textarea:focus {
+    @apply outline-none ring-2 ring-primary/20 border-primary;
+}
+
+/* Button active state */
+button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+/* Tooltip arrow */
+.tooltip-arrow {
+    @apply absolute w-2 h-2 bg-popover rotate-45;
 }

@@ -1,54 +1,90 @@
 import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "./components/ui/sonner";
+import { useAuthStore } from "./store/authStore";
+import { useThemeStore } from "./store/themeStore";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Layouts
+import { MainLayout } from "./components/layout/MainLayout";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+// Pages
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import ClientsPage from "./pages/ClientsPage";
+import ClientDetailPage from "./pages/ClientDetailPage";
+import QuotesPage from "./pages/QuotesPage";
+import QuoteBuilderPage from "./pages/QuoteBuilderPage";
+import MaterialsPage from "./pages/MaterialsPage";
+import ExpensesPage from "./pages/ExpensesPage";
+import EmployeesPage from "./pages/EmployeesPage";
+import SettingsPage from "./pages/SettingsPage";
+import UsersPage from "./pages/UsersPage";
+
+import "./App.css";
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+    const { isAuthenticated } = useAuthStore();
+    
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
     }
-  };
+    
+    return children;
+};
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
+// Admin Route Component
+const AdminRoute = ({ children }) => {
+    const { isAuthenticated, user } = useAuthStore();
+    
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+    
+    if (user?.role !== 'admin') {
+        return <Navigate to="/" replace />;
+    }
+    
+    return children;
 };
 
 function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
+    const { initTheme } = useThemeStore();
+    
+    useEffect(() => {
+        initTheme();
+    }, [initTheme]);
+
+    return (
+        <BrowserRouter>
+            <Toaster position="top-right" richColors />
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                
+                <Route path="/" element={
+                    <ProtectedRoute>
+                        <MainLayout />
+                    </ProtectedRoute>
+                }>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="clienti" element={<ClientsPage />} />
+                    <Route path="clienti/:id" element={<ClientDetailPage />} />
+                    <Route path="preventivi" element={<QuotesPage />} />
+                    <Route path="preventivi/nuovo" element={<QuoteBuilderPage />} />
+                    <Route path="preventivi/:id" element={<QuoteBuilderPage />} />
+                    <Route path="materiali" element={<MaterialsPage />} />
+                    <Route path="spese" element={<ExpensesPage />} />
+                    <Route path="dipendenti" element={<EmployeesPage />} />
+                    <Route path="impostazioni" element={<SettingsPage />} />
+                    <Route path="utenti" element={
+                        <AdminRoute>
+                            <UsersPage />
+                        </AdminRoute>
+                    } />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
 export default App;
