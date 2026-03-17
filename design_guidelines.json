@@ -1,0 +1,132 @@
+{
+  "identity": {
+    "persona": "E1: The Anti-AI Designer",
+    "mission": "Create a 'Tactical Artisan' interface that blends Swiss precision with the raw materiality of construction.",
+    "core_principles": [
+      "Fusion over Imitation: Combine 'Architectural Blueprint' precision with 'Painter's Studio' vibrancy.",
+      "Content is King: Data clarity is paramount for quotes, but the frame should feel premium.",
+      "Negative Space: Use whitespace to separate complex quote data.",
+      "Contrast: High contrast for readability in bright construction sites."
+    ]
+  },
+  "typography": {
+    "primary_font": "Inter",
+    "secondary_font": "Chivo",
+    "mono_font": "JetBrains Mono",
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold",
+      "body": "text-base font-normal leading-relaxed",
+      "caption": "text-sm text-muted-foreground",
+      "label": "text-xs font-medium uppercase tracking-wider text-muted-foreground"
+    }
+  },
+  "colors": {
+    "theme": "light",
+    "palette": {
+      "primary": "#005f73",
+      "primary_foreground": "#ffffff",
+      "secondary": "#e9d8a6",
+      "secondary_foreground": "#0a0a0a",
+      "accent": "#ae2012",
+      "accent_foreground": "#ffffff",
+      "background": "#ffffff",
+      "surface": "#f8f9fa",
+      "surface_highlight": "#e9ecef",
+      "border": "#dee2e6",
+      "success": "#0a9396",
+      "warning": "#ee9b00",
+      "error": "#ae2012"
+    },
+    "gradients": {
+      "dashboard_header": "bg-gradient-to-r from-[#005f73] to-[#0a9396]",
+      "subtle_overlay": "bg-gradient-to-b from-transparent to-black/5"
+    }
+  },
+  "layout": {
+    "spacing_scale": "relaxed",
+    "container_padding": "p-6 md:p-8 lg:p-12",
+    "grid_system": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+      "quote_builder": "grid grid-cols-12 gap-6"
+    },
+    "structure": {
+      "sidebar": "fixed left-0 top-0 h-screen w-64 bg-background border-r z-50",
+      "main_content": "ml-64 p-8 min-h-screen bg-surface"
+    }
+  },
+  "components": {
+    "button": {
+      "default": "rounded-md font-medium transition-all duration-200 active:scale-95",
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+      "ghost": "hover:bg-accent/10 hover:text-accent"
+    },
+    "card": {
+      "style": "bg-card text-card-foreground rounded-xl border shadow-sm hover:shadow-md transition-shadow duration-200",
+      "header": "p-6 border-b",
+      "content": "p-6"
+    },
+    "input": {
+      "style": "h-10 rounded-md border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "border-gray-200",
+    "shadows": "shadow-sm hover:shadow-md",
+    "radius": "rounded-lg",
+    "textures": "bg-noise-subtle",
+    "micro_interactions": "transition-all duration-200 ease-in-out"
+  },
+  "images": {
+    "hero_login": {
+      "url": "https://images.unsplash.com/photo-1717281234297-3def5ae3eee1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwyfHxob3VzZSUyMHBhaW50ZXJ8ZW58MHx8fHwxNzczNzgxNDk5fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Professional painter at work",
+      "usage": "Login page background or hero section"
+    },
+    "dashboard_card_bg": {
+      "url": "https://images.unsplash.com/photo-1769173129390-a57de2512782?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTB8MHwxfHNlYXJjaHwxfHxwYWludCUyMGJ1Y2tldHMlMjB0b29sc3xlbnwwfHx8fDE3NzM3ODE0OTl8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Paint tools and buckets",
+      "usage": "Inventory section header or empty state"
+    },
+    "quote_header": {
+      "url": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBvZmZpY2UlMjBpbnRlcmlvcnxlbnwwfHx8fDE3NzM3ODE1MDF8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Modern clean interior",
+      "usage": "Quote PDF header or success state"
+    },
+    "empty_state": {
+      "url": "https://images.unsplash.com/photo-1560184897-ae75f418493e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA4Mzl8MHwxfHNlYXJjaHwzfHxob3VzZSUyMHBhaW50ZXJ8ZW58MHx8fHwxNzczNzgxNDk5fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Clean porch",
+      "usage": "Empty list state"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. THEME SETUP: Implement the 'Tactical Artisan' color palette in tailwind.config.js immediately. Add the custom colors (primary: #005f73, etc).",
+    "2. COMPONENT OVERRIDES: Customize the existing Shadcn components in /src/components/ui. Remove default 'zinc' feel. Increase border radius to '0.5rem' or '0.75rem'.",
+    "3. LAYOUT: Build a SidebarLayout component that wraps the main content. Do NOT use a top navbar for the main app navigation.",
+    "4. DASHBOARD: Create a 'Bento Grid' dashboard using the spacing rules. Use the 'dashboard_card_bg' image as a subtle texture or header for the inventory widget.",
+    "5. QUOTE BUILDER: This is the core feature. Use a dense table layout but with 'comfortable' padding (py-3). Use 'secondary' color for the header row.",
+    "6. PDF: Ensure the PDF generation uses the same 'Swiss' typography guidelines for a professional look.",
+    "7. FILE EXTENSIONS: STRICTLY use .js / .jsx extensions. Do not create .ts / .tsx files.",
+    "8. LANGUAGE: All hardcoded text MUST be in ITALIAN.",
+    "9. ICONS: Use Lucide-React (already installed). Use 'PaintBucket', 'Roller', 'Palette' icons for painting context."
+  ],
+  "universal_guidelines": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; }",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Components MUST use named exports (export const ComponentName = ...).",
+    "Pages MUST use default exports (export default function PageName() {...}).",
+    "Use 'sonner' for toasts.",
+    "All interactive and key informational elements MUST include a data-testid attribute."
+  ]
+}
