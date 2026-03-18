@@ -3,121 +3,90 @@
 ## Problema Originale
 Applicazione web full-stack per la gestione di preventivi per un'impresa di costruzioni/edile, con funzionalità offline e distribuzione desktop.
 
-## Requisiti Core
-- Autenticazione (Admin/Operator) con "Ricordami" e gestione sessioni
-- Gestione Clienti (CRUD completo, ricerca)
-- Costruttore Preventivi (intestazione, voci personalizzabili, totali)
-- Storico Preventivi (filtri, duplicazione)
-- Inventario Materiali e Spese
-- Tracciamento Pagamenti Dipendenti
-- Generazione PDF
-- Impostazioni configurabili
-- UI in italiano
-
 ## Architettura Tecnica
 - **Frontend**: React + Tailwind CSS + shadcn/ui + Zustand
-- **Backend**: FastAPI + Python
-- **Database**: SQLite
-- **Desktop**: Electron (per distribuzione Windows)
+- **Backend**: FastAPI + Python + SQLite
+- **Desktop**: Electron (Windows .exe)
 
-## Stato Implementazione
+## ✅ Funzionalità Completate
 
-### ✅ Fase 1 - Completata (Dicembre 2025)
-- [x] MVP completa con autenticazione JWT
-- [x] Migrazione da MongoDB a SQLite completata
-- [x] Login con "Ricordami per 30 giorni"
-- [x] Gestione sessioni avanzata
-- [x] CRUD Clienti, Preventivi, Materiali, Spese, Dipendenti
+### Core App
+- [x] Autenticazione JWT con "Ricordami 30 giorni"
+- [x] Gestione sessioni (timeout inattività configurabile)
+- [x] CRUD Clienti con Combobox (input libero)
+- [x] Costruttore Preventivi con categorie
+- [x] Storico Preventivi
+- [x] Inventario Materiali con alert scorte
+- [x] Gestione Spese
+- [x] Dipendenti + Worklogs + Pagamenti
 - [x] Dashboard con statistiche
-- [x] Generazione PDF preventivi
-- [x] Categorie predefinite (11 categorie)
+- [x] Generazione PDF
+- [x] Ricerca globale (Ctrl+K)
+- [x] Gestore Categorie drag-and-drop
 - [x] UI completamente in italiano
 
-### ✅ Fase 2 - Completata (Dicembre 2025)
-- [x] Barra di ricerca globale (Ctrl+K)
-- [x] Combobox per input libero (Città, Provincia, Condizioni Pagamento)
-- [x] Gestore Categorie con CRUD e drag-and-drop
-- [x] Timeout inattività configurabile
-- [x] Logout automatico per inattività
+### Desktop (Electron)
+- [x] Configurazione completa per Windows
+- [x] System Tray con menu
+- [x] Backup automatici (ogni 24h)
+- [x] Setup Wizard primo avvio
+- [x] Single instance
+- [x] Script di build (build.bat)
+- [x] Documentazione installazione
 
-### ✅ Fase 3 - Electron Desktop (Dicembre 2025)
-- [x] **Bug fix**: Selezione categorie nel costruttore preventivi
-- [x] **Configurazione Electron** completa (`/app/electron/`)
-- [x] **main.js**: Entry point con gestione backend, finestre, tray
-- [x] **preload.js**: Bridge sicuro per API Electron
-- [x] **splash.html**: Splash screen animato all'avvio
-- [x] **System Tray**: Icona con menu contestuale
-- [x] **Backup automatici**: Ogni 24 ore, mantiene ultimi 10
-- [x] **Setup Wizard**: Primo avvio con configurazione guidata
-- [x] **Single Instance**: Impedisce istanze multiple
-- [x] **Build scripts**: `build.sh` (Linux/Mac), `build.bat` (Windows)
-- [x] **Documentazione**: README.md con istruzioni complete
+## 📁 Struttura Progetto
 
-### In Attesa / Backlog
-- [ ] Modifica in linea nelle tabelle preventivi
-- [ ] Avviso modifiche non salvate (beforeunload)
-- [ ] Export CSV/Excel
+```
+/app/
+├── backend/
+│   ├── server.py           # FastAPI + SQLite
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── pages/          # Pagine React
+│   │   ├── components/     # Componenti UI
+│   │   ├── store/          # Zustand stores
+│   │   └── lib/            # API client
+│   └── package.json
+├── electron/
+│   ├── main.js             # Entry point Electron
+│   ├── preload.js          # Bridge sicuro
+│   ├── splash.html         # Splash screen
+│   ├── package.json        # Config electron-builder
+│   ├── build.bat           # Script Windows
+│   ├── build.sh            # Script Linux/Mac
+│   ├── INSTALLAZIONE_WINDOWS.md  # Guida dettagliata
+│   ├── GUIDA_RAPIDA.md     # Quick start
+│   └── COME_CREARE_ICONA.md
+└── memory/
+    └── PRD.md
+```
 
-## File Principali
+## 🚀 Come Generare l'EXE
 
-### Backend
-- `/app/backend/server.py` - Backend FastAPI (~1700 righe)
-- `/app/backend/preventivi.db` - Database SQLite
+### Prerequisiti
+1. Node.js 18+ (https://nodejs.org/)
+2. Python 3.10+ (https://python.org/) - con PATH!
+3. Dipendenze Python:
+   ```
+   pip install fastapi uvicorn aiosqlite pyjwt python-multipart reportlab python-dateutil
+   ```
 
-### Frontend
-- `/app/frontend/src/pages/QuoteBuilderPage.jsx` - Costruttore preventivi (fix categorie)
-- `/app/frontend/src/pages/SettingsPage.jsx` - Impostazioni + Gestore Categorie
-- `/app/frontend/src/pages/ClientsPage.jsx` - Form con Combobox
-- `/app/frontend/src/components/layout/MainLayout.jsx` - Ricerca globale + inattività
-- `/app/frontend/src/components/ui/combobox.jsx` - Input libero
+### Build
+```cmd
+cd C:\percorso\progetto
+electron\build.bat
+```
 
-### Electron
-- `/app/electron/package.json` - Config npm e electron-builder
-- `/app/electron/main.js` - Entry point Electron
-- `/app/electron/preload.js` - Bridge sicuro
-- `/app/electron/splash.html` - Splash screen
-- `/app/electron/build.sh` - Script build Linux/Mac
-- `/app/electron/build.bat` - Script build Windows
-- `/app/electron/README.md` - Istruzioni build
+### Output
+- `electron\dist\Preventivi Pittura Edile Setup 1.0.0.exe` (Installer)
+- `electron\dist\PreventiviPittura-Portable-1.0.0.exe` (Portable)
 
-## Credenziali Test
+## 🔑 Credenziali Test
 - Username: `admin`
 - Password: `admin123`
 
-## Come Generare l'EXE Windows
-
-```bash
-# 1. Clona/scarica il progetto
-# 2. Vai nella cartella principale
-cd /path/to/progetto
-
-# 3. Esegui lo script di build
-# Linux/Mac:
-./electron/build.sh
-
-# Windows:
-electron\build.bat
-
-# 4. Trova l'EXE in: electron/dist/
-```
-
-## Funzionalità Desktop
-
-### System Tray
-- Minimizza in tray invece di chiudere
-- Doppio click per riaprire
-- Menu: Apri, Backup, Cartella Backup, Esci
-
-### Backup Automatici
-- Ogni 24 ore (configurabile)
-- Mantiene ultimi 10 backup
-- Backup manuale dal menu tray
-
-### Setup Wizard
-- Primo avvio guidato
-- Crea cartelle dati automaticamente
-
-## Note Tecniche
-- Route FastAPI: statiche prima di dinamiche
-- IVA auto-impostata dalla categoria selezionata
-- Timeout inattività: 5-480 minuti
+## 📋 Backlog
+- [ ] Modifica in linea tabelle preventivi
+- [ ] Avviso modifiche non salvate
+- [ ] Export CSV/Excel
