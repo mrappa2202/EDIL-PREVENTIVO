@@ -5,6 +5,7 @@ import { authApi } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Checkbox } from "../components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { toast } from "sonner";
 import { PaintBucket, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -14,6 +15,7 @@ export default function LoginPage() {
     const { login, isAuthenticated } = useAuthStore();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -32,14 +34,31 @@ export default function LoginPage() {
 
         setLoading(true);
         try {
-            const response = await authApi.login({ username, password });
-            login(response.data.token, response.data.user);
+            const response = await authApi.login({ 
+                username, 
+                password, 
+                remember_me: rememberMe 
+            });
+            login(
+                response.data.token, 
+                response.data.user, 
+                response.data.session_id,
+                rememberMe,
+                response.data.inactivity_timeout_minutes
+            );
             toast.success("Accesso effettuato con successo");
             navigate("/");
         } catch (error) {
             toast.error(error.response?.data?.detail || "Credenziali non valide");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Prevent form submission on Enter in inputs
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
         }
     };
 
@@ -76,6 +95,7 @@ export default function LoginPage() {
                                         placeholder="Inserisci username"
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
+                                        onKeyDown={handleKeyDown}
                                         disabled={loading}
                                         data-testid="login-username"
                                         className="h-11"
@@ -90,6 +110,7 @@ export default function LoginPage() {
                                             placeholder="Inserisci password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
+                                            onKeyDown={handleKeyDown}
                                             disabled={loading}
                                             data-testid="login-password"
                                             className="h-11 pr-10"
@@ -106,6 +127,20 @@ export default function LoginPage() {
                                             )}
                                         </button>
                                     </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="remember"
+                                        checked={rememberMe}
+                                        onCheckedChange={setRememberMe}
+                                        data-testid="login-remember"
+                                    />
+                                    <Label 
+                                        htmlFor="remember" 
+                                        className="text-sm font-normal cursor-pointer"
+                                    >
+                                        Ricordami per 30 giorni
+                                    </Label>
                                 </div>
                                 <Button
                                     type="submit"

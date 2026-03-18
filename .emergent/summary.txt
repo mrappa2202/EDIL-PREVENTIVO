@@ -1,0 +1,284 @@
+<analysis>**original_problem_statement:**
+L'utente ha richiesto inizialmente un'applicazione web full-stack per la gestione di preventivi per un'impresa di costruzioni/edile, da eseguire localmente su PC e con capacità offline. I requisiti iniziali includevano:
+-   Autenticazione (Admin/Operator)
+-   Gestione Clienti (CRUD, ricerca)
+-   Costruttore di Preventivi (intestazione, voci personalizzabili, totali)
+-   Storico Preventivi (filtri, duplicazione)
+-   Inventario Materiali e Spese
+-   Tracciamento Pagamenti Dipendenti
+-   Generazione PDF (preventivi, fatture)
+-   Impostazioni configurabili (aliquote IVA, categorie, numerazione)
+-   UI in lingua italiana, pulita e professionale.
+
+Successivamente, l'utente ha richiesto un'estensione significativa delle funzionalità:
+-   **Gestione Categorie Voci:** CRUD completo per categorie e sotto-categorie, con tag colore, IVA di default e riordino drag-and-drop.
+-   **Input di Testo Libero:** Tutti i campi a discesa devono accettare anche input personalizzati (modello combobox), con opzione per salvare i nuovi valori.
+-   **Gestione Avanzata della Sessione:** Login persistente (Ricordami), logout automatico per inattività, tracciamento delle sessioni attive e salvataggio automatico delle bozze.
+-   **Pacchetto di Distribuzione Desktop (Electron):** Creare un pacchetto  per Windows che includa l'app completa (frontend + backend + DB) per un funzionamento totalmente offline, con icona nella system tray e avvio automatico.
+-   **Miglioramenti Aggiuntivi:** Modifica in linea nelle tabelle, avviso per modifiche non salvate e una barra di ricerca globale.
+
+L'utente ha specificato di voler procedere con **Electron** per la distribuzione e **SQLite** come database, scartando l'opzione del PIN lock per la sessione.
+
+**User's preferred language**: Italian
+
+**what currently exists?**
+Nella prima sessione è stata creata un'applicazione MVP (Minimum Viable Product) completa, utilizzando FastAPI per il backend e MongoDB come database. L'applicazione includeva autenticazione, gestione clienti e un costruttore di preventivi.
+
+Nella sessione attuale, è iniziata una massiccia revisione basata sulle nuove richieste dell'utente. Il lavoro si è concentrato sulla migrazione del database da MongoDB a SQLite. Il file  è stato completamente riscritto per utilizzare SQLite, e la dipendenza  è stata installata. Sul frontend, è stato creato un nuovo componente  per l'input di testo libero e la  è stata aggiornata per includere la funzionalità Ricordami, insieme alle necessarie modifiche in  e .
+
+**Last working item**:
+-   **Last item agent was working**: Aggiornamento della pagina di login () per aggiungere la checkbox Ricordami e la logica di gestione della sessione persistente lato frontend.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: both (L'agente di test frontend e backend dovrà essere utilizzato una volta completata l'integrazione tra il nuovo backend SQLite e le modifiche al frontend).
+-   **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+Nessun bug specifico è stato segnalato. L'intera attività corrente è considerata un'unica grande issue in corso, che consiste nella migrazione del database e nell'implementazione di nuove funzionalità. Le attività sono elencate di seguito.
+
+**In progress Task List**:
+  - **Task 1: Migrazione del Backend e nuove API (P0)**
+     - **Where to resume**: Il file  è stato riscritto per SQLite ma non è stato testato. È necessario verificare che il server si avvii correttamente, che il database venga creato e che le API di base (come il login) funzionino con la nuova logica. Successivamente, implementare le nuove API per la gestione delle categorie, la ricerca globale e la gestione delle sessioni.
+     - **What will be achieved with this?**: Un backend stabile basato su SQLite, pronto per supportare le nuove funzionalità del frontend.
+     - **Status**: IN PROGRESS
+     - **Should Test frontend/backend/both after fix?**: backend
+     - **Blocked on something**: No
+
+  - **Task 2: Implementazione Funzionalità Frontend (P1)**
+     - **Where to resume**: Il componente  è stato creato e  è stata aggiornata. Il prossimo passo è integrare il  in tutti i form richiesti (Clienti, Voci Preventivo, Spese, etc.) e completare la logica di gestione della sessione (logout per inattività, avvisi).
+     - **What will be achieved with this?**: Un'interfaccia utente che supporta l'input di testo libero e una gestione della sessione più robusta.
+     - **Status**: IN PROGRESS
+     - **Should Test frontend/backend/both after fix?**: frontend
+     - **Blocked on something**: Task 1 (richiede che le API del backend siano funzionanti).
+
+**Upcoming and Future Tasks**
+  **Upcoming Tasks:**
+    - **Task 3: Gestore Categorie (P1)**: Sviluppare l'interfaccia dedicata nelle impostazioni per il CRUD completo delle categorie e sotto-categorie, incluso il riordino drag-and-drop. (File: ).
+    - **Task 4: Ricerca Globale (P1)**: Aggiungere una barra di ricerca nell'header per cercare tra clienti, preventivi e materiali. (File: ).
+    - **Task 5: Modifica in Linea (P2)**: Implementare la modifica diretta delle voci del preventivo nella tabella, senza l'uso di modali. (File: ).
+    - **Task 6: Avviso Modifiche non Salvate (P2)**: Aggiungere un avviso che appare quando si tenta di lasciare una pagina con un preventivo non salvato.
+    - **Task 7: Gestione Sessioni Avanzata (Backend) (P1)**: Implementare la logica per il timeout di inattività, il tracciamento delle sessioni e la revoca lato server. (File: ).
+
+  **Future Tasks:**
+    - **Task 8: Packaging con Electron (P0)**: Configurare Electron per impacchettare l'intera applicazione (frontend, backend, DB) in un eseguibile  per Windows. Questo include il setup wizard al primo avvio, l'icona nella system tray e i backup automatici del database.
+
+**Completed work in this session**
+- **MVP Iniziale (Sessione Precedente):**
+  - Creata un'app completa con FastAPI + MongoDB.
+  - Implementate autenticazione, gestione clienti, costruttore preventivi base.
+- **Sessione Corrente (Inizio Lavori):**
+  - Installata la dipendenza  per il backend.
+  - Riscritto  per la migrazione da MongoDB a SQLite.
+  - Creato il componente  per l'input di testo libero.
+  - Aggiornati i file ,  e  per la gestione della sessione.
+
+**Earlier issues found/mentioned but not fixed**
+   - **Issue 1: Consistenza parametri API**
+     - **Debug checklist**: Nel report di test della prima sessione () era stato suggerito di rinominare i parametri dell'API per coerenza (es.  invece di ).
+     - **Why to solve this issue and what will be achieved with this?**: Migliora la manutenibilità e la coerenza del codice API. Dato che il backend è in fase di riscrittura, questa è l'occasione ideale per applicare questa correzione.
+     - **Should Test frontend/backend/both after fix**: backend
+     - **Is recurring issue?**: N
+
+**Known issue recurrence from previous fork**
+- None
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Frontend:** React, Tailwind CSS, shadcn/ui, Zustand
+- **Backend:** FastAPI, Python
+- **Database:** SQLite (migrazione da MongoDB in corso)
+- **Packaging:** Electron (pianificato)
+- **Authentication:** JWT
+
+**key DB schema**
+Lo schema del database è in fase di ridefinizione all'interno del nuovo file  per supportare SQLite. Includerà tabelle per , , , ,  (con supporto per sotto-categorie), , ,  e .
+
+**changes in tech stack**
+- **Database Migration**: Passaggio da **MongoDB a SQLite**. Questa è la modifica tecnica più critica e impattante della sessione corrente.
+- **Desktop Application Wrapper**: Introduzione pianificata di **Electron** per creare un'applicazione desktop stand-alone.
+
+**All files of reference**
+- : Riscritto per usare SQLite invece di MongoDB. Contiene la nuova logica del backend.
+- : Nuovo componente React per consentire input di testo libero nei campi di selezione.
+- : Aggiornato per includere la checkbox Ricordami e la logica associata.
+- : Modificato per gestire lo stato di rememberMe e il token persistente.
+- : Probabilmente modificato per allinearsi a eventuali nuove rotte API del backend riscritto.
+- : Linee guida di design generate nella sessione precedente.
+- : Report del test della MVP iniziale.
+
+**Areas that need refactoring**:
+L'intera applicazione è nel mezzo di un refactoring significativo a causa della migrazione del database e dell'aggiunta di nuove funzionalità complesse. L'attenzione principale deve essere quella di stabilizzare prima il backend e poi adattare il frontend in modo incrementale.
+
+**key api endpoints**
+Gli endpoint sono in fase di ridefinizione in . I nuovi endpoint includeranno:
+- CRUD completo per  (incluse sotto-categorie).
+- Endpoint per salvare nuove opzioni personalizzate dai combobox (es. ).
+- Endpoint per la gestione della sessione (, ).
+- Un endpoint di ricerca globale .
+
+**Critical Info for New Agent**
+- La priorità assoluta è la **migrazione da MongoDB a SQLite**. Tutto il nuovo codice del backend deve interagire con SQLite tramite . Non utilizzare più alcun codice relativo a MongoDB.
+- L'utente ha scelto **Electron** per il pacchetto di distribuzione desktop. Questa sarà l'ultima fase del lavoro, ma le decisioni di sviluppo dovrebbero tenerne conto (es. gestione dei percorsi dei file locali).
+- L'utente ha esplicitamente chiesto di **non implementare il PIN lock**.
+- La lingua di comunicazione e dell'interfaccia utente deve essere l'**italiano**.
+- È fondamentale stabilizzare e testare il nuovo backend () prima di procedere massicciamente con le modifiche al frontend.
+
+**documents and test reports created in this job**
+- 
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User**: Fornisce la nuova lista di requisiti (Gestione Categorie, Input Libero, Gestione Sessione, Pacchetto Electron, ecc.). (COMPLETED - Agent is acting on it)
+2.  **Agent**: Chiede all'utente di scegliere tra le opzioni per la distribuzione (Electron/Portable), il database (SQLite/Postgres) e la gestione della sessione. (COMPLETED)
+3.  **User**: Risponde scegliendo: 1. Electron, 2. SQLite, 3. Gestione sessione senza PIN lock. (COMPLETED - Agent has acknowledged choices)
+4.  **Agent**: Conferma le scelte e pianifica il lavoro in 3 fasi (Backend, Frontend, Electron). (COMPLETED)
+5.  **Agent**: Inizia la Fase 1 installando . (COMPLETED)
+6.  **Agent**: Riscrive  per SQLite. (COMPLETED)
+7.  **Agent**: Inizia la Fase 2 creando il componente  e aggiornando  e . (COMPLETED)
+8.  **Agent**: Aggiorna  con la funzionalità Ricordami. (COMPLETED)
+
+**Project Health Check:**
+- **Broken**: Il progetto è attualmente in uno stato non funzionante. Il backend è stato riscritto per un nuovo database (SQLite) ma non è stato testato. Il frontend è stato parzialmente modificato ma non è sincronizzato con il nuovo backend. La migrazione è a metà.
+
+**3rd Party Integrations**
+- Nessuna. L'applicazione è progettata per essere completamente offline.
+
+**Testing status**
+- **Testing agent used after significant changes**: NO (Non ancora utilizzato dopo l'inizio della migrazione).
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: []
+- **Known regressions**: L'intera applicazione è regredita a uno stato non funzionante a causa della migrazione in corso.
+
+**Credentials to test flow:**
+Le credenziali originali erano  / . È necessario verificare se sono ancora valide dopo la riscrittura di  e l'inizializzazione del nuovo database SQLite.
+
+**What agent forgot to execute**
+- L'agente ha installato  ma non ha aggiornato il file  eseguendo aiohappyeyeballs==2.6.1
+aiohttp==3.13.3
+aiosignal==1.4.0
+aiosqlite==0.22.1
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.12.1
+attrs==25.4.0
+bcrypt==4.1.3
+black==26.1.0
+boto3==1.42.58
+botocore==1.42.58
+certifi==2026.2.25
+cffi==2.0.0
+charset-normalizer==3.4.4
+click==8.3.1
+cryptography==46.0.5
+distro==1.9.0
+dnspython==2.8.0
+ecdsa==0.19.1
+email-validator==2.3.0
+emergentintegrations==0.1.0
+fastapi==0.110.1
+fastuuid==0.14.0
+filelock==3.25.0
+flake8==7.3.0
+frozenlist==1.8.0
+fsspec==2026.2.0
+google-ai-generativelanguage==0.6.15
+google-api-core==2.30.0
+google-api-python-client==2.191.0
+google-auth==2.49.0.dev0
+google-auth-httplib2==0.3.0
+google-genai==1.65.0
+google-generativeai==0.8.6
+googleapis-common-protos==1.72.0
+grpcio==1.78.0
+grpcio-status==1.71.2
+h11==0.16.0
+hf-xet==1.3.2
+httpcore==1.0.9
+httplib2==0.31.2
+httpx==0.28.1
+huggingface_hub==1.5.0
+idna==3.11
+importlib_metadata==8.7.1
+iniconfig==2.3.0
+isort==8.0.0
+Jinja2==3.1.6
+jiter==0.13.0
+jmespath==1.1.0
+jq==1.11.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+librt==0.8.1
+litellm==1.80.0
+markdown-it-py==4.0.0
+MarkupSafe==3.0.3
+mccabe==0.7.0
+mdurl==0.1.2
+motor==3.3.1
+multidict==6.7.1
+mypy==1.19.1
+mypy_extensions==1.1.0
+numpy==2.4.2
+oauthlib==3.3.1
+openai==1.99.9
+packaging==26.0
+pandas==3.0.1
+passlib==1.7.4
+pathspec==1.0.4
+pillow==12.1.1
+platformdirs==4.9.2
+pluggy==1.6.0
+propcache==0.4.1
+proto-plus==1.27.1
+protobuf==5.29.6
+pyasn1==0.6.2
+pyasn1_modules==0.4.2
+pycodestyle==2.14.0
+pycparser==3.0
+pydantic==2.12.5
+pydantic_core==2.41.5
+pyflakes==3.4.0
+Pygments==2.19.2
+PyJWT==2.11.0
+pymongo==4.5.0
+pyparsing==3.3.2
+pytest==9.0.2
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
+python-jose==3.5.0
+python-multipart==0.0.22
+pytokens==0.4.1
+PyYAML==6.0.3
+referencing==0.37.0
+regex==2026.2.28
+reportlab==4.4.10
+requests==2.32.5
+requests-oauthlib==2.0.0
+rich==14.3.3
+rpds-py==0.30.0
+rsa==4.9.1
+s3transfer==0.16.0
+s5cmd==0.2.0
+shellingham==1.5.4
+six==1.17.0
+sniffio==1.3.1
+starlette==0.37.2
+stripe==14.4.0
+tenacity==9.1.4
+tiktoken==0.12.0
+tokenizers==0.22.2
+tqdm==4.67.3
+typer==0.24.1
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+tzdata==2025.3
+uritemplate==4.2.0
+urllib3==2.6.3
+uvicorn==0.25.0
+watchfiles==1.1.1
+websockets==16.0
+yarl==1.23.0
+zipp==3.23.0. Questo causerà problemi di dipendenza in un nuovo ambiente.
+- L'agente ha iniziato a modificare il frontend immediatamente dopo aver riscritto il backend, senza prima verificare che il nuovo server si avviasse e funzionasse correttamente. Un approccio più sicuro sarebbe stato stabilizzare e testare il backend prima di modificare il frontend.</analysis>

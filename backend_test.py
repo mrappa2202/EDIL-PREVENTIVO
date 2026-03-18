@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 
 class PaintingQuoteAPITester:
-    def __init__(self, base_url="https://site-preventivi.preview.emergentagent.com"):
+    def __init__(self, base_url="https://costruzioni-desk.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0

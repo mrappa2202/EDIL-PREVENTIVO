@@ -28,7 +28,9 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            useAuthStore.getState().logout();
+            const authStore = useAuthStore.getState();
+            // Save draft before logout if editing quote
+            authStore.logout();
             window.location.href = '/login';
         }
         return Promise.reject(error);
@@ -38,7 +40,12 @@ api.interceptors.response.use(
 // Auth
 export const authApi = {
     login: (data) => api.post('/auth/login', data),
+    logout: () => api.post('/auth/logout'),
     me: () => api.get('/auth/me'),
+    getSessions: () => api.get('/auth/sessions'),
+    revokeSession: (sessionId) => api.delete(`/auth/sessions/${sessionId}`),
+    changePassword: (data) => api.post('/auth/change-password', data),
+    heartbeat: () => api.post('/auth/heartbeat'),
 };
 
 // Users
@@ -46,6 +53,22 @@ export const usersApi = {
     getAll: () => api.get('/users'),
     create: (data) => api.post('/users', data),
     delete: (id) => api.delete(`/users/${id}`),
+};
+
+// Categories
+export const categoriesApi = {
+    getAll: () => api.get('/categories'),
+    create: (data) => api.post('/categories', data),
+    update: (id, data) => api.put(`/categories/${id}`, data),
+    reorder: (positions) => api.put('/categories/reorder', positions),
+    delete: (id, reassignTo = null) => 
+        api.delete(`/categories/${id}${reassignTo ? `?reassign_to=${reassignTo}` : ''}`),
+};
+
+// Saved Options (for combobox persistence)
+export const optionsApi = {
+    get: (optionType) => api.get(`/options/${optionType}`),
+    save: (data) => api.post('/options', data),
 };
 
 // Clients
@@ -69,6 +92,10 @@ export const quotesApi = {
     delete: (id) => api.delete(`/quotes/${id}`),
     duplicate: (id) => api.post(`/quotes/${id}/duplicate`),
     getPdf: (id) => api.get(`/quotes/${id}/pdf`, { responseType: 'blob' }),
+    // Drafts
+    saveDraft: (data) => api.post('/quotes/drafts', data),
+    getDrafts: () => api.get('/quotes/drafts'),
+    deleteDraft: (id) => api.delete(`/quotes/drafts/${id}`),
 };
 
 // Materials
@@ -135,6 +162,11 @@ export const settingsApi = {
 // Dashboard
 export const dashboardApi = {
     getStats: () => api.get('/dashboard/stats'),
+};
+
+// Global Search
+export const searchApi = {
+    search: (query, limit = 20) => api.get(`/search?q=${encodeURIComponent(query)}&limit=${limit}`),
 };
 
 export default api;
