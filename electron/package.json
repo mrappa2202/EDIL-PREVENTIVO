@@ -17,6 +17,7 @@
     "directories": {
       "output": "dist"
     },
+    "asar": false,
     "files": [
       "main.js",
       "preload.js",
@@ -26,7 +27,7 @@
     ],
     "extraResources": [
       {
-        "from": "backend/dist/preventivi-backend.exe",
+        "from": "backend/preventivi-backend.exe",
         "to": "backend/preventivi-backend.exe"
       }
     ],
