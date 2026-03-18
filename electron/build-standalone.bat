@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM   BUILD STANDALONE - Preventivi Pittura Edile
+REM   BUILD STANDALONE - Preventivi Pittura Edile v1.1
 REM   Versione che NON richiede Python installato sul PC finale
 REM ============================================================
 
@@ -11,75 +11,95 @@ echo ============================================================
 echo   PREVENTIVI PITTURA EDILE - Build Standalone per Windows
 echo ============================================================
 echo.
-echo Questo script genera un'applicazione completamente autonoma.
-echo Non sara' necessario installare Python sul PC di destinazione.
-echo.
 
 REM === VERIFICA REQUISITI ===
 echo [1/7] Verifica requisiti...
 
 where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    echo.
     echo ERRORE: Node.js non trovato!
     echo Scaricalo da: https://nodejs.org/
-    echo.
     pause
     exit /b 1
 )
 
 where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
-    echo.
     echo ERRORE: Python non trovato!
     echo Scaricalo da: https://www.python.org/downloads/
-    echo IMPORTANTE: Seleziona "Add Python to PATH" durante l'installazione!
-    echo.
+    echo IMPORTANTE: Seleziona "Add Python to PATH"!
     pause
     exit /b 1
 )
 
-where pip >nul 2>nul
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo ERRORE: pip non trovato!
-    echo Reinstalla Python e assicurati che pip sia incluso.
-    echo.
-    pause
-    exit /b 1
-)
-
-echo   [OK] Node.js trovato
-echo   [OK] Python trovato
-echo   [OK] pip trovato
+echo   [OK] Node.js e Python trovati
 echo.
 
 REM === INSTALLA DIPENDENZE PYTHON ===
-echo [2/7] Installazione dipendenze Python...
-pip install pyinstaller fastapi uvicorn aiosqlite pyjwt python-multipart reportlab python-dateutil --quiet
+echo [2/7] Installazione dipendenze Python (PyInstaller + app)...
+pip install pyinstaller fastapi uvicorn[standard] aiosqlite pyjwt python-multipart reportlab python-dateutil --quiet --upgrade
 if %ERRORLEVEL% neq 0 (
-    echo ERRORE: Installazione dipendenze Python fallita!
+    echo ERRORE: Installazione dipendenze fallita!
     pause
     exit /b 1
 )
-echo   [OK] Dipendenze Python installate
+echo   [OK] Dipendenze installate
 echo.
 
 REM === PULISCI BUILD PRECEDENTI ===
 echo [3/7] Pulizia build precedenti...
-if exist electron\backend rd /s /q electron\backend
-if exist electron\frontend-build rd /s /q electron\frontend-build
-if exist electron\dist rd /s /q electron\dist
-if exist backend\dist rd /s /q backend\dist
-if exist backend\build rd /s /q backend\build
+if exist electron\backend rd /s /q electron\backend 2>nul
+if exist electron\frontend-build rd /s /q electron\frontend-build 2>nul
+if exist electron\dist rd /s /q electron\dist 2>nul
+if exist backend\dist rd /s /q backend\dist 2>nul
+if exist backend\build rd /s /q backend\build 2>nul
 echo   [OK] Pulizia completata
 echo.
 
 REM === GENERA BACKEND EXE CON PYINSTALLER ===
 echo [4/7] Generazione backend standalone (PyInstaller)...
-echo        Questo passaggio puo' richiedere alcuni minuti...
+echo        Questo puo' richiedere 3-5 minuti...
 cd backend
-python -m PyInstaller --onefile --name preventivi-backend --hidden-import=uvicorn.logging --hidden-import=uvicorn.loops --hidden-import=uvicorn.loops.auto --hidden-import=uvicorn.protocols --hidden-import=uvicorn.protocols.http --hidden-import=uvicorn.protocols.http.auto --hidden-import=uvicorn.protocols.websockets --hidden-import=uvicorn.protocols.websockets.auto --hidden-import=uvicorn.lifespan --hidden-import=uvicorn.lifespan.on --hidden-import=aiosqlite --hidden-import=reportlab.lib.colors --hidden-import=reportlab.lib.pagesizes --hidden-import=reportlab.pdfgen.canvas --hidden-import=reportlab.platypus --clean server.py
+
+python -m PyInstaller ^
+    --onefile ^
+    --name preventivi-backend ^
+    --hidden-import=uvicorn.logging ^
+    --hidden-import=uvicorn.loops ^
+    --hidden-import=uvicorn.loops.auto ^
+    --hidden-import=uvicorn.protocols ^
+    --hidden-import=uvicorn.protocols.http ^
+    --hidden-import=uvicorn.protocols.http.auto ^
+    --hidden-import=uvicorn.protocols.http.h11_impl ^
+    --hidden-import=uvicorn.protocols.http.httptools_impl ^
+    --hidden-import=uvicorn.protocols.websockets ^
+    --hidden-import=uvicorn.protocols.websockets.auto ^
+    --hidden-import=uvicorn.protocols.websockets.websockets_impl ^
+    --hidden-import=uvicorn.lifespan ^
+    --hidden-import=uvicorn.lifespan.on ^
+    --hidden-import=uvicorn.lifespan.off ^
+    --hidden-import=aiosqlite ^
+    --hidden-import=sqlite3 ^
+    --hidden-import=reportlab ^
+    --hidden-import=reportlab.lib ^
+    --hidden-import=reportlab.lib.colors ^
+    --hidden-import=reportlab.lib.pagesizes ^
+    --hidden-import=reportlab.lib.styles ^
+    --hidden-import=reportlab.lib.units ^
+    --hidden-import=reportlab.pdfgen ^
+    --hidden-import=reportlab.pdfgen.canvas ^
+    --hidden-import=reportlab.platypus ^
+    --hidden-import=reportlab.platypus.paragraph ^
+    --hidden-import=reportlab.platypus.tables ^
+    --hidden-import=email.mime.multipart ^
+    --hidden-import=email.mime.text ^
+    --collect-all uvicorn ^
+    --collect-all starlette ^
+    --collect-all fastapi ^
+    --clean ^
+    --noconfirm ^
+    server.py
+
 cd ..
 
 if not exist backend\dist\preventivi-backend.exe (
@@ -89,44 +109,56 @@ if not exist backend\dist\preventivi-backend.exe (
     pause
     exit /b 1
 )
-echo   [OK] Backend standalone generato
+
+echo   [OK] Backend EXE generato: backend\dist\preventivi-backend.exe
 echo.
 
-REM === PREPARA CARTELLA BACKEND ===
+REM === PREPARA CARTELLA BACKEND PER ELECTRON ===
 echo [5/7] Preparazione backend per Electron...
-mkdir electron\backend\dist
-copy backend\dist\preventivi-backend.exe electron\backend\dist\
-echo   [OK] Backend copiato
+mkdir electron\backend 2>nul
+copy backend\dist\preventivi-backend.exe electron\backend\
+if %ERRORLEVEL% neq 0 (
+    echo ERRORE: Copia backend fallita!
+    pause
+    exit /b 1
+)
+echo   [OK] Backend copiato in electron\backend\
 echo.
 
 REM === BUILD FRONTEND ===
 echo [6/7] Compilazione frontend React...
 cd frontend
-echo REACT_APP_BACKEND_URL=http://127.0.0.1:8001/api > .env.production.local
+
+REM Crea .env.production.local per build locale
+echo REACT_APP_BACKEND_URL=http://127.0.0.1:8001/api> .env.production.local
+
+call npm install --silent 2>nul
 call npm run build
+
 cd ..
 
 if not exist frontend\build\index.html (
-    echo.
     echo ERRORE: Build frontend fallita!
     pause
     exit /b 1
 )
 
-xcopy /E /I /Y /Q frontend\build electron\frontend-build
+xcopy /E /I /Y /Q frontend\build electron\frontend-build >nul
 echo   [OK] Frontend compilato
 echo.
 
 REM === BUILD ELECTRON ===
-echo [7/7] Generazione applicazione desktop...
+echo [7/7] Generazione applicazione desktop Electron...
 cd electron
-call npm install
+
+call npm install --silent 2>nul
 call npm run build:win
+
 cd ..
 
 echo.
 echo ============================================================
-echo   BUILD COMPLETATO CON SUCCESSO!
+echo   BUILD COMPLETATO!
 echo ============================================================
 echo.
 echo File generati in: electron\dist\
@@ -134,19 +166,25 @@ echo.
 
 if exist "electron\dist\Preventivi Pittura Edile Setup 1.0.0.exe" (
     echo   [INSTALLER] Preventivi Pittura Edile Setup 1.0.0.exe
+    for %%A in ("electron\dist\Preventivi Pittura Edile Setup 1.0.0.exe") do echo              Dimensione: %%~zA bytes
 )
 if exist "electron\dist\PreventiviPittura-Standalone-1.0.0.exe" (
     echo   [PORTABLE]  PreventiviPittura-Standalone-1.0.0.exe
+    for %%A in ("electron\dist\PreventiviPittura-Standalone-1.0.0.exe") do echo              Dimensione: %%~zA bytes
 )
 
 echo.
-echo ISTRUZIONI:
-echo   1. Copia uno dei file .exe su qualsiasi PC Windows
-echo   2. Eseguilo - NON serve installare nient'altro!
-echo   3. L'applicazione e' completamente autonoma
+echo ============================================================
+echo   ISTRUZIONI PER L'USO
+echo ============================================================
 echo.
-echo Credenziali di accesso:
-echo   Username: admin
-echo   Password: admin123
+echo   1. Copia uno dei file .exe su QUALSIASI PC Windows
+echo   2. Eseguilo con doppio click
+echo   3. NON serve installare Python, Node.js o altro!
 echo.
+echo   Credenziali di accesso:
+echo     Username: admin
+echo     Password: admin123
+echo.
+echo ============================================================
 pause

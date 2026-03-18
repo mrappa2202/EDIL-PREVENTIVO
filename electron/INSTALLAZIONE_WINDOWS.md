@@ -1,4 +1,4 @@
-# 🏗️ Preventivi Pittura Edile - VERSIONE STANDALONE
+# 🏗️ Preventivi Pittura Edile - VERSIONE STANDALONE v1.1
 
 ## ✅ Cosa Significa "Standalone"?
 
@@ -9,96 +9,88 @@ Una volta generato l'EXE, puoi:
 2. Eseguirlo con doppio click
 3. **NON serve installare Python, Node.js o altro software**
 
-Tutto ciò che serve è incluso nell'EXE.
-
 ---
 
-## 🚀 Come Generare l'EXE (Una Sola Volta)
+## 🚀 Come Generare l'EXE
 
-### Prerequisiti (solo per il BUILD, non per l'uso finale)
+### Prerequisiti (SOLO per il PC dove fai il build)
 
-Sul PC dove fai il build, installa:
-
-1. **Node.js 18+** → https://nodejs.org/ (versione LTS)
+1. **Node.js 18+** → https://nodejs.org/ (scarica LTS)
 2. **Python 3.10+** → https://www.python.org/downloads/
-   - ⚠️ **IMPORTANTE**: Seleziona "Add Python to PATH"
+   - ⚠️ **IMPORTANTE**: Durante l'installazione seleziona **"Add Python to PATH"**
 
-### Procedura Build
+### Procedura
 
-1. **Apri il Prompt dei comandi** (cmd)
+1. Apri il **Prompt dei comandi** (cmd)
 
-2. **Vai nella cartella del progetto**:
+2. Vai nella cartella del progetto:
    ```cmd
    cd C:\percorso\preventivi-pittura
    ```
 
-3. **Esegui lo script di build**:
+3. Esegui lo script:
    ```cmd
    electron\build-standalone.bat
    ```
 
-4. **Attendi** (10-15 minuti la prima volta)
+4. Attendi 10-15 minuti (la prima volta)
 
-5. **Trova gli EXE** in `electron\dist\`:
-   - `Preventivi Pittura Edile Setup 1.0.0.exe` → Installer
-   - `PreventiviPittura-Standalone-1.0.0.exe` → Portable
+5. Troverai gli EXE in `electron\dist\`
 
 ---
 
-## 📦 Usare l'Applicazione
+## 📦 File Generati
 
-### Versione Portable (Consigliata)
+| File | Tipo | Uso |
+|------|------|-----|
+| `Preventivi Pittura Edile Setup 1.0.0.exe` | Installer | Installa l'app sul PC |
+| `PreventiviPittura-Standalone-1.0.0.exe` | Portable | Esegui direttamente, nessuna installazione |
 
-1. Copia `PreventiviPittura-Standalone-1.0.0.exe` sul PC di destinazione
-2. Doppio click per avviare
-3. **FATTO!** Nessuna installazione richiesta
-
-### Versione Installer
-
-1. Copia `Preventivi Pittura Edile Setup 1.0.0.exe` sul PC
-2. Doppio click per installare
-3. Segui la procedura guidata
-4. L'app apparirà nel menu Start e sul desktop
+**Consiglio**: Usa la versione **Portable** per semplicità!
 
 ---
 
-## 🔐 Primo Accesso
+## 🖥️ Usare l'Applicazione (PC Finale)
 
-**Credenziali predefinite:**
-- Username: `admin`
-- Password: `admin123`
+### Requisiti PC Finale
+- Windows 10/11 (64-bit)
+- 300 MB di spazio
+- **NIENT'ALTRO!** ✅
 
-⚠️ Cambia la password dopo il primo accesso!
+### Avvio
+1. Copia l'EXE sul PC
+2. Doppio click
+3. Al primo avvio appare un wizard di configurazione
+4. Accedi con: `admin` / `admin123`
 
 ---
 
-## 📁 Dove Sono Salvati i Dati?
+## 📁 Dove Sono i Dati?
 
+I dati sono salvati in:
 ```
 C:\Users\[UTENTE]\AppData\Roaming\preventivi-pittura-edile\
-├── preventivi.db      ← Database (tutti i tuoi dati)
-└── backups\           ← Backup automatici
+├── preventivi.db   ← Il tuo database
+└── backups\        ← Backup automatici
 ```
+
+Per accedere: Click destro sull'icona nella barra → "Apri Cartella Dati"
 
 ---
 
 ## 💾 Backup
 
-### Automatici
-- Ogni 24 ore l'app crea un backup
+- **Automatico**: Ogni 24 ore
+- **Manuale**: Click destro icona → "Backup Database"
 - Vengono mantenuti gli ultimi 10 backup
-
-### Manuali
-- Click destro sull'icona nella barra di sistema (vicino all'orologio)
-- Seleziona "Backup Database"
 
 ---
 
 ## 🔧 System Tray
 
-Quando chiudi la finestra, l'app **non si chiude** ma resta attiva nella barra di sistema.
+Quando chiudi la finestra, l'app resta attiva nella barra (vicino all'orologio).
 
-**Menu (click destro sull'icona):**
+**Menu contestuale:**
 - Apri Preventivi
 - Backup Database
 - Apri Cartella Backup
@@ -107,45 +99,32 @@ Quando chiudi la finestra, l'app **non si chiude** ma resta attiva nella barra d
 
 ---
 
-## ❓ FAQ
+## ❓ Risoluzione Problemi
 
-### "Posso usare l'app su più PC?"
-Sì! Copia l'EXE su ogni PC. Ogni PC avrà il suo database locale.
+### "Backend EXE non trovato"
+Lo script di build non ha completato correttamente. Riesegui `build-standalone.bat`.
 
-### "Come trasferisco i dati su un altro PC?"
-Copia il file `preventivi.db` dalla cartella dati del PC vecchio a quella del nuovo.
+### L'app non si avvia
+1. Prova come Amministratore (click destro → Esegui come amministratore)
+2. Controlla l'antivirus (potrebbe bloccare l'app)
+3. Verifica che Windows sia 64-bit
 
-### "L'antivirus blocca l'app"
-Alcune app impacchettate con PyInstaller possono essere segnalate. Aggiungi un'eccezione nell'antivirus.
-
-### "L'app non si avvia"
-1. Prova ad eseguire come Amministratore
-2. Verifica che Windows sia 64-bit
-3. Controlla i log nella cartella dati
-
----
-
-## 📋 Requisiti Sistema (PC Finale)
-
-| Requisito | Minimo |
-|-----------|--------|
-| Sistema | Windows 10/11 64-bit |
-| RAM | 4 GB |
-| Spazio | 300 MB |
-| **Python** | ❌ **NON richiesto** |
-| **Node.js** | ❌ **NON richiesto** |
-| **Altri software** | ❌ **NESSUNO** |
+### Come trasferire i dati su un altro PC
+1. Vai in `AppData\Roaming\preventivi-pittura-edile\`
+2. Copia `preventivi.db`
+3. Sul nuovo PC, avvia l'app una volta, poi chiudila
+4. Incolla il file `preventivi.db` nella stessa cartella
 
 ---
 
-## 📝 Note Tecniche
+## 📋 Checklist Build
 
-- L'app usa **SQLite** come database (tutto in un file)
-- Il backend Python è stato convertito in EXE con **PyInstaller**
-- Il frontend React è stato compilato e incluso
-- Tutto è impacchettato insieme con **Electron**
+- [ ] Node.js installato (`node --version` funziona)
+- [ ] Python installato con PATH (`python --version` funziona)
+- [ ] Eseguito `electron\build-standalone.bat`
+- [ ] Trovato file .exe in `electron\dist\`
 
 ---
 
-**Versione**: 1.0.0 Standalone  
-**Ultimo aggiornamento**: Dicembre 2025
+**Versione**: 1.1.0  
+**Ultimo aggiornamento**: Marzo 2026

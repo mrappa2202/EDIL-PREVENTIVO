@@ -1,6 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, dialog, shell } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const Store = require('electron-store');
 
@@ -24,15 +24,37 @@ let isQuitting = false;
 
 // Paths
 const isDev = !app.isPackaged;
-const resourcesPath = isDev ? __dirname : process.resourcesPath;
 const userDataPath = app.getPath('userData');
 const dbPath = path.join(userDataPath, 'preventivi.db');
 const backupDir = path.join(userDataPath, 'backups');
 
-// Backend executable path (PyInstaller generated)
-const backendExePath = isDev 
-    ? path.join(__dirname, 'backend', 'dist', 'preventivi-backend.exe')
-    : path.join(resourcesPath, 'backend', 'preventivi-backend.exe');
+// Get the correct backend path based on environment
+function getBackendPath() {
+    if (isDev) {
+        // Development mode - look in backend/dist folder
+        return path.join(__dirname, 'backend', 'dist', 'preventivi-backend.exe');
+    } else {
+        // Production mode - look in resources folder
+        // electron-builder puts extraResources in process.resourcesPath
+        const possiblePaths = [
+            path.join(process.resourcesPath, 'backend', 'preventivi-backend.exe'),
+            path.join(process.resourcesPath, 'preventivi-backend.exe'),
+            path.join(path.dirname(app.getPath('exe')), 'resources', 'backend', 'preventivi-backend.exe'),
+            path.join(path.dirname(app.getPath('exe')), 'backend', 'preventivi-backend.exe'),
+        ];
+        
+        for (const p of possiblePaths) {
+            console.log('Checking backend path:', p);
+            if (fs.existsSync(p)) {
+                console.log('Found backend at:', p);
+                return p;
+            }
+        }
+        
+        // Return first path as default (will show error)
+        return possiblePaths[0];
+    }
+}
 
 // Ensure directories exist
 function ensureDirectories() {
@@ -81,9 +103,15 @@ function createMainWindow() {
         }
     });
 
-    // Load the app
+    // Load the app - always use localhost since backend runs locally
+    const frontendUrl = isDev 
+        ? 'http://localhost:3000'
+        : `file://${path.join(__dirname, 'frontend-build', 'index.html')}`;
+    
+    console.log('Loading frontend from:', frontendUrl);
+    
     if (isDev) {
-        mainWindow.loadURL('http://localhost:3000');
+        mainWindow.loadURL(frontendUrl);
         mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, 'frontend-build', 'index.html'));
@@ -127,10 +155,14 @@ function createTray() {
     let icon;
     
     try {
-        icon = nativeImage.createFromPath(iconPath);
-        icon = icon.resize({ width: 16, height: 16 });
+        if (fs.existsSync(iconPath)) {
+            icon = nativeImage.createFromPath(iconPath);
+            icon = icon.resize({ width: 16, height: 16 });
+        } else {
+            icon = nativeImage.createEmpty();
+        }
     } catch (e) {
-        console.log('Icon not found, using default');
+        console.log('Icon error:', e);
         icon = nativeImage.createEmpty();
     }
     
@@ -183,19 +215,25 @@ function createTray() {
 // Start backend server (STANDALONE EXE VERSION)
 function startBackend() {
     return new Promise((resolve, reject) => {
-        console.log('Starting backend server (standalone)...');
-        console.log('Backend path:', backendExePath);
+        const backendExePath = getBackendPath();
+        
+        console.log('=== BACKEND STARTUP ===');
+        console.log('isDev:', isDev);
+        console.log('Backend EXE path:', backendExePath);
         console.log('DB path:', dbPath);
+        console.log('User data path:', userDataPath);
         
         // Check if backend exists
         if (!fs.existsSync(backendExePath)) {
-            const error = new Error(`Backend non trovato: ${backendExePath}`);
+            const error = new Error(`Backend EXE non trovato!\n\nPercorso cercato:\n${backendExePath}\n\nAssicurati che il build sia stato completato correttamente.`);
             console.error(error.message);
             reject(error);
             return;
         }
         
-        // Set environment variables
+        console.log('Backend EXE found, starting...');
+        
+        // Set environment variables for the backend
         const env = {
             ...process.env,
             DB_PATH: dbPath,
@@ -203,57 +241,73 @@ function startBackend() {
             PORT: '8001'
         };
         
+        // Use execFile for .exe files on Windows
         backendProcess = spawn(backendExePath, [], {
             env: env,
             stdio: ['ignore', 'pipe', 'pipe'],
-            windowsHide: true
+            windowsHide: true,
+            detached: false
         });
         
         let started = false;
+        let outputBuffer = '';
         
         backendProcess.stdout.on('data', (data) => {
             const output = data.toString();
-            console.log('Backend:', output);
-            if (output.includes('Uvicorn running') || output.includes('Application startup complete') || output.includes('Started server')) {
-                if (!started) {
-                    started = true;
-                    resolve();
-                }
+            outputBuffer += output;
+            console.log('Backend stdout:', output);
+            
+            if (!started && (
+                output.includes('Uvicorn running') || 
+                output.includes('Application startup complete') || 
+                output.includes('Started server') ||
+                output.includes('INFO:')
+            )) {
+                started = true;
+                console.log('Backend started successfully!');
+                resolve();
             }
         });
         
         backendProcess.stderr.on('data', (data) => {
             const output = data.toString();
-            console.error('Backend stderr:', output);
-            // Uvicorn logs to stderr by default
-            if (output.includes('Uvicorn running') || output.includes('Application startup complete') || output.includes('Started server')) {
-                if (!started) {
-                    started = true;
-                    resolve();
-                }
+            outputBuffer += output;
+            console.log('Backend stderr:', output);
+            
+            // Uvicorn logs startup messages to stderr
+            if (!started && (
+                output.includes('Uvicorn running') || 
+                output.includes('Application startup complete') || 
+                output.includes('Started server') ||
+                output.includes('INFO:')
+            )) {
+                started = true;
+                console.log('Backend started successfully (from stderr)!');
+                resolve();
             }
         });
         
         backendProcess.on('error', (err) => {
-            console.error('Failed to start backend:', err);
-            reject(err);
+            console.error('Backend process error:', err);
+            reject(new Error(`Errore avvio backend: ${err.message}`));
         });
         
         backendProcess.on('close', (code) => {
-            console.log('Backend process exited with code:', code);
+            console.log('Backend process closed with code:', code);
+            console.log('Output buffer:', outputBuffer);
             if (!started) {
-                reject(new Error(`Backend closed with code: ${code}`));
+                reject(new Error(`Backend terminato con codice: ${code}\n\nOutput:\n${outputBuffer.slice(-500)}`));
             }
         });
         
-        // Timeout - try to continue anyway after 10 seconds
+        // Timeout - assume started after 8 seconds if no crash
         setTimeout(() => {
-            if (!started) {
-                console.log('Backend startup timeout, attempting to continue...');
+            if (!started && backendProcess && !backendProcess.killed) {
+                console.log('Backend startup timeout - assuming started');
                 started = true;
                 resolve();
             }
-        }, 10000);
+        }, 8000);
     });
 }
 
@@ -262,11 +316,17 @@ function stopBackend() {
     if (backendProcess) {
         console.log('Stopping backend server...');
         
-        // On Windows, we need to kill the process tree
-        if (process.platform === 'win32') {
-            spawn('taskkill', ['/pid', backendProcess.pid, '/f', '/t']);
-        } else {
-            backendProcess.kill('SIGTERM');
+        try {
+            // On Windows, kill the process tree
+            if (process.platform === 'win32') {
+                spawn('taskkill', ['/pid', backendProcess.pid.toString(), '/f', '/t'], {
+                    windowsHide: true
+                });
+            } else {
+                backendProcess.kill('SIGTERM');
+            }
+        } catch (e) {
+            console.error('Error stopping backend:', e);
         }
         
         backendProcess = null;
@@ -280,7 +340,7 @@ function createBackup() {
             type: 'warning',
             title: 'Backup',
             message: 'Database non trovato',
-            detail: 'Non è possibile creare un backup perché il database non esiste ancora.'
+            detail: 'Non è possibile creare un backup perché il database non esiste ancora.\nAvvia l\'applicazione e crea almeno un dato.'
         });
         return;
     }
@@ -295,8 +355,8 @@ function createBackup() {
         dialog.showMessageBox({
             type: 'info',
             title: 'Backup Completato',
-            message: 'Backup creato con successo',
-            detail: `Il backup è stato salvato in:\n${backupPath}`
+            message: 'Backup creato con successo!',
+            detail: `Salvato in:\n${backupPath}`
         });
         
         cleanOldBackups();
@@ -355,7 +415,7 @@ function scheduleAutoBackup() {
         }
     }
     
-    setTimeout(scheduleAutoBackup, 60 * 60 * 1000); // Check every hour
+    setTimeout(scheduleAutoBackup, 60 * 60 * 1000);
 }
 
 // First run setup wizard
@@ -363,8 +423,17 @@ async function showSetupWizard() {
     const result = await dialog.showMessageBox({
         type: 'info',
         title: 'Benvenuto in Preventivi Pittura Edile',
-        message: 'Configurazione iniziale',
-        detail: 'È la prima volta che avvii l\'applicazione.\n\nL\'applicazione creerà automaticamente:\n• Un database locale per i tuoi dati\n• Una cartella per i backup automatici\n\nI tuoi dati saranno salvati in:\n' + userDataPath + '\n\nNessuna installazione di software aggiuntivo è richiesta!',
+        message: 'Prima configurazione',
+        detail: `È la prima volta che avvii l'applicazione.
+
+Verrà creato automaticamente:
+• Un database locale per i tuoi dati
+• Una cartella per i backup automatici
+
+I dati saranno salvati in:
+${userDataPath}
+
+Nessun software aggiuntivo è richiesto!`,
         buttons: ['Continua', 'Annulla'],
         defaultId: 0,
         cancelId: 1
@@ -381,6 +450,12 @@ async function showSetupWizard() {
 
 // App ready handler
 app.whenReady().then(async () => {
+    console.log('=== APP STARTING ===');
+    console.log('App path:', app.getAppPath());
+    console.log('Exe path:', app.getPath('exe'));
+    console.log('Resources path:', process.resourcesPath);
+    console.log('User data path:', userDataPath);
+    
     ensureDirectories();
     
     // Show splash
@@ -388,23 +463,33 @@ app.whenReady().then(async () => {
     
     // First run check
     if (store.get('isFirstRun')) {
+        if (splashWindow) {
+            splashWindow.hide();
+        }
         const proceed = await showSetupWizard();
         if (!proceed) return;
+        if (splashWindow) {
+            splashWindow.show();
+        }
     }
     
     // Start backend
     try {
         await startBackend();
-        console.log('Backend started successfully');
+        console.log('Backend ready!');
     } catch (err) {
         console.error('Backend startup error:', err);
         
+        if (splashWindow) {
+            splashWindow.hide();
+        }
+        
         const result = await dialog.showMessageBox({
             type: 'error',
-            title: 'Errore Avvio',
-            message: 'Impossibile avviare il server backend',
-            detail: 'Errore: ' + err.message + '\n\nVuoi provare ad avviare comunque l\'applicazione?',
-            buttons: ['Riprova', 'Avvia Comunque', 'Esci'],
+            title: 'Errore Avvio Backend',
+            message: 'Impossibile avviare il server',
+            detail: `${err.message}\n\nVuoi provare ad avviare comunque l'interfaccia?`,
+            buttons: ['Riprova', 'Avvia Senza Backend', 'Esci'],
             defaultId: 0
         });
         
@@ -414,6 +499,9 @@ app.whenReady().then(async () => {
         }
         
         if (result.response === 0) {
+            if (splashWindow) {
+                splashWindow.show();
+            }
             try {
                 await startBackend();
             } catch (e) {
@@ -432,7 +520,7 @@ app.whenReady().then(async () => {
 
 // Handle all windows closed
 app.on('window-all-closed', () => {
-    // Keep running in tray
+    // Keep running in tray on Windows
 });
 
 // Handle app activation
@@ -467,10 +555,4 @@ if (!gotTheLock) {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
     console.error('Uncaught exception:', error);
-    dialog.showMessageBox({
-        type: 'error',
-        title: 'Errore',
-        message: 'Si è verificato un errore imprevisto',
-        detail: error.message
-    });
 });
