@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
-import { quotesApi, clientsApi, settingsApi } from "../lib/api";
+import { quotesApi, clientsApi, settingsApi, categoriesApi } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -36,7 +36,8 @@ const statusOptions = [
 
 const emptyItem = {
     id: "",
-    category: "",
+    category_id: "",
+    category_name: "",
     description: "",
     unit: "mq",
     quantity: 1,
@@ -54,6 +55,7 @@ export default function QuoteBuilderPage() {
     const [saving, setSaving] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [clients, setClients] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [settings, setSettings] = useState(null);
     const [quote, setQuote] = useState({
         client_id: searchParams.get("client") || "",
@@ -74,12 +76,14 @@ export default function QuoteBuilderPage() {
 
     const loadData = async () => {
         try {
-            const [clientsRes, settingsRes] = await Promise.all([
+            const [clientsRes, settingsRes, categoriesRes] = await Promise.all([
                 clientsApi.getAll(),
                 settingsApi.get(),
+                categoriesApi.getAll(),
             ]);
             setClients(clientsRes.data);
             setSettings(settingsRes.data);
+            setCategories(categoriesRes.data);
 
             if (id) {
                 const quoteRes = await quotesApi.getOne(id);
@@ -384,16 +388,32 @@ export default function QuoteBuilderPage() {
                                                 </div>
                                                 <div className="col-span-4 space-y-2">
                                                     <Select
-                                                        value={item.category}
-                                                        onValueChange={(value) => handleItemChange(index, "category", value)}
+                                                        value={item.category_id || ""}
+                                                        onValueChange={(value) => {
+                                                            const selectedCat = categories.find(c => c.id === value);
+                                                            handleItemChange(index, "category_id", value);
+                                                            handleItemChange(index, "category_name", selectedCat?.name || "");
+                                                            // Auto-set IVA from category default
+                                                            if (selectedCat?.default_vat_percent) {
+                                                                handleItemChange(index, "vat_percent", selectedCat.default_vat_percent);
+                                                            }
+                                                        }}
                                                     >
-                                                        <SelectTrigger className="h-8 text-xs">
-                                                            <SelectValue placeholder="Categoria" />
+                                                        <SelectTrigger className="h-8 text-xs" data-testid={`item-category-${index}`}>
+                                                            <SelectValue placeholder="Categoria">
+                                                                {item.category_name || "Categoria"}
+                                                            </SelectValue>
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {settings?.categories?.map((cat) => (
-                                                                <SelectItem key={cat} value={cat}>
-                                                                    {cat}
+                                                            {categories.map((cat) => (
+                                                                <SelectItem key={cat.id} value={cat.id}>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div 
+                                                                            className="w-3 h-3 rounded-full" 
+                                                                            style={{ backgroundColor: cat.color }}
+                                                                        />
+                                                                        {cat.name}
+                                                                    </div>
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>

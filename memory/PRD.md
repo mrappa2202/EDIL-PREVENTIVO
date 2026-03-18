@@ -17,8 +17,8 @@ Applicazione web full-stack per la gestione di preventivi per un'impresa di cost
 ## Architettura Tecnica
 - **Frontend**: React + Tailwind CSS + shadcn/ui + Zustand
 - **Backend**: FastAPI + Python
-- **Database**: SQLite (migrato da MongoDB)
-- **Packaging Futuro**: Electron
+- **Database**: SQLite
+- **Desktop**: Electron (per distribuzione Windows)
 
 ## Stato Implementazione
 
@@ -26,67 +26,98 @@ Applicazione web full-stack per la gestione di preventivi per un'impresa di cost
 - [x] MVP completa con autenticazione JWT
 - [x] Migrazione da MongoDB a SQLite completata
 - [x] Login con "Ricordami per 30 giorni"
-- [x] Gestione sessioni avanzata (tracciamento, revoca)
-- [x] CRUD Clienti completo
-- [x] CRUD Preventivi con voci
-- [x] CRUD Materiali con alert scorte
-- [x] CRUD Spese
-- [x] CRUD Dipendenti + Worklogs + Pagamenti
+- [x] Gestione sessioni avanzata
+- [x] CRUD Clienti, Preventivi, Materiali, Spese, Dipendenti
 - [x] Dashboard con statistiche
 - [x] Generazione PDF preventivi
 - [x] Categorie predefinite (11 categorie)
-- [x] Impostazioni azienda complete
 - [x] UI completamente in italiano
-- [x] Test backend 100% (25/25 test)
 
 ### ✅ Fase 2 - Completata (Dicembre 2025)
-- [x] **Barra di ricerca globale** - Header con shortcut Ctrl+K
-- [x] **Combobox per input libero** - Città, Provincia, Condizioni Pagamento
-- [x] **Salvataggio opzioni personalizzate** - API /api/options
-- [x] **Gestore Categorie** - Tab dedicato nelle Impostazioni
-- [x] **CRUD Categorie** - Creazione, modifica, eliminazione con conferma
-- [x] **Drag-and-drop categorie** - Riordino visuale
-- [x] **Sotto-categorie** - Supporto via parent_id
-- [x] **Indicatore timeout inattività** - Visibile nell'header
-- [x] **Avviso sessione in scadenza** - Dialog 2 minuti prima
-- [x] **Logout automatico per inattività** - Configurabile nelle impostazioni
-- [x] Test backend 100% (21/21 test Fase 2)
-- [x] Test frontend 100%
+- [x] Barra di ricerca globale (Ctrl+K)
+- [x] Combobox per input libero (Città, Provincia, Condizioni Pagamento)
+- [x] Gestore Categorie con CRUD e drag-and-drop
+- [x] Timeout inattività configurabile
+- [x] Logout automatico per inattività
+
+### ✅ Fase 3 - Electron Desktop (Dicembre 2025)
+- [x] **Bug fix**: Selezione categorie nel costruttore preventivi
+- [x] **Configurazione Electron** completa (`/app/electron/`)
+- [x] **main.js**: Entry point con gestione backend, finestre, tray
+- [x] **preload.js**: Bridge sicuro per API Electron
+- [x] **splash.html**: Splash screen animato all'avvio
+- [x] **System Tray**: Icona con menu contestuale
+- [x] **Backup automatici**: Ogni 24 ore, mantiene ultimi 10
+- [x] **Setup Wizard**: Primo avvio con configurazione guidata
+- [x] **Single Instance**: Impedisce istanze multiple
+- [x] **Build scripts**: `build.sh` (Linux/Mac), `build.bat` (Windows)
+- [x] **Documentazione**: README.md con istruzioni complete
 
 ### In Attesa / Backlog
-
-#### P1 - Prossime Funzionalità
 - [ ] Modifica in linea nelle tabelle preventivi
 - [ ] Avviso modifiche non salvate (beforeunload)
-- [ ] Export dati in CSV/Excel
-
-#### P0 - Fase Finale (Electron)
-- [ ] Packaging con Electron per distribuzione Windows
-  - Setup wizard primo avvio
-  - Icona system tray
-  - Backup automatico database
-  - Avvio automatico con Windows
+- [ ] Export CSV/Excel
 
 ## File Principali
-- `/app/backend/server.py` - Backend FastAPI completo (~1700 righe)
+
+### Backend
+- `/app/backend/server.py` - Backend FastAPI (~1700 righe)
 - `/app/backend/preventivi.db` - Database SQLite
-- `/app/frontend/src/components/layout/MainLayout.jsx` - Layout con ricerca e inattività
-- `/app/frontend/src/pages/SettingsPage.jsx` - Impostazioni con Gestore Categorie
+
+### Frontend
+- `/app/frontend/src/pages/QuoteBuilderPage.jsx` - Costruttore preventivi (fix categorie)
+- `/app/frontend/src/pages/SettingsPage.jsx` - Impostazioni + Gestore Categorie
 - `/app/frontend/src/pages/ClientsPage.jsx` - Form con Combobox
-- `/app/frontend/src/components/ui/combobox.jsx` - Componente input libero
-- `/app/frontend/src/store/authStore.js` - Gestione autenticazione
-- `/app/frontend/src/lib/api.js` - Client API
+- `/app/frontend/src/components/layout/MainLayout.jsx` - Ricerca globale + inattività
+- `/app/frontend/src/components/ui/combobox.jsx` - Input libero
+
+### Electron
+- `/app/electron/package.json` - Config npm e electron-builder
+- `/app/electron/main.js` - Entry point Electron
+- `/app/electron/preload.js` - Bridge sicuro
+- `/app/electron/splash.html` - Splash screen
+- `/app/electron/build.sh` - Script build Linux/Mac
+- `/app/electron/build.bat` - Script build Windows
+- `/app/electron/README.md` - Istruzioni build
 
 ## Credenziali Test
 - Username: `admin`
 - Password: `admin123`
 
-## API Base URL
-```
-https://costruzioni-desk.preview.emergentagent.com/api
+## Come Generare l'EXE Windows
+
+```bash
+# 1. Clona/scarica il progetto
+# 2. Vai nella cartella principale
+cd /path/to/progetto
+
+# 3. Esegui lo script di build
+# Linux/Mac:
+./electron/build.sh
+
+# Windows:
+electron\build.bat
+
+# 4. Trova l'EXE in: electron/dist/
 ```
 
+## Funzionalità Desktop
+
+### System Tray
+- Minimizza in tray invece di chiudere
+- Doppio click per riaprire
+- Menu: Apri, Backup, Cartella Backup, Esci
+
+### Backup Automatici
+- Ogni 24 ore (configurabile)
+- Mantiene ultimi 10 backup
+- Backup manuale dal menu tray
+
+### Setup Wizard
+- Primo avvio guidato
+- Crea cartelle dati automaticamente
+
 ## Note Tecniche
-- **FastAPI Route Order**: Le route statiche (es. `/categories/reorder`) devono precedere le route dinamiche (es. `/categories/{category_id}`)
-- **Combobox**: Salva opzioni via `/api/options` con `option_type` e `option_value`
-- **Inattività**: Configurabile da 5 a 480 minuti, utenti con "Ricordami" esclusi
+- Route FastAPI: statiche prima di dinamiche
+- IVA auto-impostata dalla categoria selezionata
+- Timeout inattività: 5-480 minuti
