@@ -1,90 +1,91 @@
-# Gestione Preventivi Pittura Edile - PRD
+# PRD - Preventivi Pittura Edile
 
-## Original Problem Statement
-Build a complete offline-capable full stack desktop web application for construction/building company quote management (preventivi edilizi) specifically for PAINTING/DECORATING business (pittura edile).
+## Problema Originale
+Applicazione web full-stack per la gestione di preventivi per un'impresa di costruzioni/edile, con funzionalità offline e distribuzione desktop.
 
-## Architecture
-- **Frontend**: React + Tailwind CSS + shadcn/ui
-- **Backend**: FastAPI (Python)
-- **Database**: MongoDB
-- **PDF Generation**: ReportLab
-- **Authentication**: JWT + bcrypt
+## Requisiti Core
+- Autenticazione (Admin/Operator) con "Ricordami" e gestione sessioni
+- Gestione Clienti (CRUD completo, ricerca)
+- Costruttore Preventivi (intestazione, voci personalizzabili, totali)
+- Storico Preventivi (filtri, duplicazione)
+- Inventario Materiali e Spese
+- Tracciamento Pagamenti Dipendenti
+- Generazione PDF
+- Impostazioni configurabili
+- UI in italiano
 
-## User Personas
-1. **Admin**: Full access to all features including user management and settings
-2. **Operator**: Can create/manage clients, quotes, materials, expenses, employees
+## Architettura Tecnica
+- **Frontend**: React + Tailwind CSS + shadcn/ui + Zustand
+- **Backend**: FastAPI + Python
+- **Database**: SQLite (migrato da MongoDB)
+- **Packaging Futuro**: Electron
 
-## Core Requirements (Static)
-- Italian language interface
-- Role-based access control
-- Client management with billing data
-- Quote builder with line items
-- Materials inventory tracking
-- Expense tracking
-- Employee payment tracking
-- PDF generation for quotes
-- Configurable settings (categories, VAT rates, units)
+## Stato Implementazione
 
-## What's Been Implemented (2026-03-17)
-- [x] Authentication system with JWT
-- [x] Client CRUD with full billing data
-- [x] Quote builder with line items, auto-calculations
-- [x] Quote status management (Bozza, Inviato, Accettato, Rifiutato, Fatturato)
-- [x] PDF generation with company header, items, totals
-- [x] Materials inventory with low stock alerts
-- [x] Expense tracking linked to projects
-- [x] Employee management with work logs and payments
-- [x] Settings configuration (company data, categories, VAT rates)
-- [x] User management (Admin only)
-- [x] Dashboard with real-time statistics
-- [x] Dark/Light theme toggle
-- [x] 11 pre-configured painting categories
+### Completato (Dicembre 2025)
+- [x] MVP completa con autenticazione JWT
+- [x] Migrazione da MongoDB a SQLite completata
+- [x] Login con "Ricordami per 30 giorni"
+- [x] Gestione sessioni avanzata (tracciamento, revoca)
+- [x] CRUD Clienti completo
+- [x] CRUD Preventivi con voci
+- [x] CRUD Materiali con alert scorte
+- [x] CRUD Spese
+- [x] CRUD Dipendenti + Worklogs + Pagamenti
+- [x] Dashboard con statistiche
+- [x] Ricerca globale
+- [x] Generazione PDF preventivi
+- [x] Categorie predefinite (11 categorie)
+- [x] Impostazioni azienda complete
+- [x] UI completamente in italiano
+- [x] Test backend 100% (25/25 test)
+- [x] Test frontend 100%
 
-## Pre-configured Categories (Pittura Edile)
-1. Preparazione Superfici
-2. Pittura Interni
-3. Pittura Esterni
-4. Verniciatura Legno
-5. Verniciatura Ferro
-6. Decorazioni
-7. Cartongesso
-8. Rasatura e Stuccatura
-9. Trattamenti Speciali
-10. Ponteggi e Noleggi
-11. Manodopera
+### In Attesa / Backlog
 
-## Units of Measure
-mq, ml, pz, kg, lt, ore, gg, corpo
+#### P1 - Prossime Funzionalità
+- [ ] Componente Combobox per input libero (già creato, da integrare nei form)
+- [ ] Gestore Categorie con drag-and-drop nelle impostazioni
+- [ ] Barra di ricerca globale nell'header
+- [ ] Modifica in linea nelle tabelle preventivi
+- [ ] Avviso modifiche non salvate
+- [ ] Logout automatico per inattività (logica backend pronta)
 
-## Default Credentials
-- Username: admin
-- Password: admin123
+#### P2 - Miglioramenti
+- [ ] Timeout inattività configurabile nelle impostazioni
+- [ ] Export dati in CSV/Excel
+- [ ] Report mensili/annuali
 
-## Prioritized Backlog
+#### P0 - Fase Finale
+- [ ] Packaging con Electron per distribuzione Windows
+  - Setup wizard primo avvio
+  - Icona system tray
+  - Backup automatico database
 
-### P0 (Critical) - COMPLETED
-- Authentication
-- Quote management
-- Client management
-- PDF generation
+## File Principali
+- `/app/backend/server.py` - Backend FastAPI completo (~1700 righe)
+- `/app/backend/preventivi.db` - Database SQLite
+- `/app/frontend/src/pages/` - Pagine React
+- `/app/frontend/src/store/authStore.js` - Gestione autenticazione
+- `/app/frontend/src/lib/api.js` - Client API
+- `/app/frontend/src/components/ui/combobox.jsx` - Componente input libero
 
-### P1 (High)
-- Invoice generation from accepted quotes
-- Quote archiving functionality
-- Database export/backup feature
+## Credenziali Test
+- Username: `admin`
+- Password: `admin123`
 
-### P2 (Medium)
-- Material usage tracking per quote
-- Project cost summary dashboard
-- Monthly revenue reports
+## API Base URL
+```
+https://costruzioni-desk.preview.emergentagent.com/api
+```
 
-### P3 (Low)
-- Batch PDF generation
-- Quote templates
-- Client communication log
-
-## Next Tasks
-1. Add invoice generation from accepted quotes
-2. Implement database backup/export functionality
-3. Add material usage tracking per project
-4. Create monthly revenue reports
+## Database Schema (SQLite)
+- users, sessions
+- categories (con sotto-categorie)
+- saved_options
+- clients
+- quotes, quote_items, quote_drafts
+- materials
+- expenses
+- employees, worklogs, payments
+- settings
