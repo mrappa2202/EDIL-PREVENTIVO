@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { clientsApi } from "../lib/api";
+import { clientsApi, optionsApi } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -15,6 +15,7 @@ import {
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Badge } from "../components/ui/badge";
+import { Combobox } from "../components/ui/combobox";
 import { toast } from "sonner";
 import {
     Plus,
@@ -64,10 +65,42 @@ export default function ClientsPage() {
     const [formData, setFormData] = useState(emptyClient);
     const [saving, setSaving] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, client: null });
+    
+    // Saved options for combobox
+    const [savedCities, setSavedCities] = useState([]);
+    const [savedProvinces, setSavedProvinces] = useState([]);
+    const [savedPaymentTerms, setSavedPaymentTerms] = useState([]);
 
     useEffect(() => {
         loadClients();
+        loadSavedOptions();
     }, []);
+    
+    const loadSavedOptions = async () => {
+        try {
+            const [citiesRes, provincesRes, paymentRes] = await Promise.all([
+                optionsApi.get('cities'),
+                optionsApi.get('provinces'),
+                optionsApi.get('payment_terms'),
+            ]);
+            setSavedCities(citiesRes.data || []);
+            setSavedProvinces(provincesRes.data || []);
+            setSavedPaymentTerms(paymentRes.data || []);
+        } catch (error) {
+            console.error("Error loading saved options:", error);
+        }
+    };
+    
+    const handleSaveOption = async (optionType, value) => {
+        try {
+            await optionsApi.save({ option_type: optionType, option_value: value });
+            // Reload options
+            loadSavedOptions();
+            toast.success(`"${value}" salvato nelle opzioni`);
+        } catch (error) {
+            console.error("Error saving option:", error);
+        }
+    };
 
     const loadClients = async (searchTerm = "") => {
         try {
@@ -363,12 +396,14 @@ export default function ClientsPage() {
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="city">Città</Label>
-                                        <Input
-                                            id="city"
-                                            name="city"
+                                        <Combobox
+                                            options={savedCities}
                                             value={formData.city}
-                                            onChange={handleChange}
-                                            placeholder="Milano"
+                                            onChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
+                                            onAddNew={(value) => handleSaveOption('cities', value)}
+                                            placeholder="Seleziona o digita..."
+                                            searchPlaceholder="Cerca città..."
+                                            data-testid="client-city-combobox"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -383,12 +418,14 @@ export default function ClientsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="province">Provincia</Label>
-                                        <Input
-                                            id="province"
-                                            name="province"
+                                        <Combobox
+                                            options={savedProvinces}
                                             value={formData.province}
-                                            onChange={handleChange}
-                                            placeholder="MI"
+                                            onChange={(value) => setFormData(prev => ({ ...prev, province: value }))}
+                                            onAddNew={(value) => handleSaveOption('provinces', value)}
+                                            placeholder="Seleziona..."
+                                            searchPlaceholder="Cerca provincia..."
+                                            data-testid="client-province-combobox"
                                         />
                                     </div>
                                 </div>
@@ -475,12 +512,14 @@ export default function ClientsPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="payment_terms">Condizioni di Pagamento</Label>
-                                <Input
-                                    id="payment_terms"
-                                    name="payment_terms"
+                                <Combobox
+                                    options={savedPaymentTerms}
                                     value={formData.payment_terms}
-                                    onChange={handleChange}
-                                    placeholder="30 giorni fine mese"
+                                    onChange={(value) => setFormData(prev => ({ ...prev, payment_terms: value }))}
+                                    onAddNew={(value) => handleSaveOption('payment_terms', value)}
+                                    placeholder="Seleziona o digita..."
+                                    searchPlaceholder="Cerca condizioni..."
+                                    data-testid="client-payment-terms-combobox"
                                 />
                             </div>
                         </div>

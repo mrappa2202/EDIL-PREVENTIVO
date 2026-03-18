@@ -716,6 +716,20 @@ async def create_category(data: CategoryCreate, user = Depends(get_current_user)
     finally:
         await db.close()
 
+class CategoryReorderRequest(BaseModel):
+    positions: Dict[str, int]
+
+@api_router.put("/categories/reorder")
+async def reorder_categories(data: CategoryReorderRequest, user = Depends(get_current_user)):
+    db = await get_db()
+    try:
+        for cat_id, position in data.positions.items():
+            await db.execute("UPDATE categories SET position = ? WHERE id = ?", (position, cat_id))
+        await db.commit()
+        return {"message": "Ordine aggiornato"}
+    finally:
+        await db.close()
+
 @api_router.put("/categories/{category_id}")
 async def update_category(category_id: str, data: CategoryCreate, user = Depends(get_current_user)):
     db = await get_db()
@@ -726,17 +740,6 @@ async def update_category(category_id: str, data: CategoryCreate, user = Depends
         ''', (data.name, data.parent_id, data.color, data.default_vat_percent, data.description, data.position, category_id))
         await db.commit()
         return {"id": category_id, **data.model_dump()}
-    finally:
-        await db.close()
-
-@api_router.put("/categories/reorder")
-async def reorder_categories(positions: Dict[str, int], user = Depends(get_current_user)):
-    db = await get_db()
-    try:
-        for cat_id, position in positions.items():
-            await db.execute("UPDATE categories SET position = ? WHERE id = ?", (position, cat_id))
-        await db.commit()
-        return {"message": "Ordine aggiornato"}
     finally:
         await db.close()
 

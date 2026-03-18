@@ -60,7 +60,7 @@ export const categoriesApi = {
     getAll: () => api.get('/categories'),
     create: (data) => api.post('/categories', data),
     update: (id, data) => api.put(`/categories/${id}`, data),
-    reorder: (positions) => api.put('/categories/reorder', positions),
+    reorder: (positions) => api.put('/categories/reorder', { positions }),
     delete: (id, reassignTo = null) => 
         api.delete(`/categories/${id}${reassignTo ? `?reassign_to=${reassignTo}` : ''}`),
 };

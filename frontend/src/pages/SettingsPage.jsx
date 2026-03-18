@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { settingsApi } from "../lib/api";
+import { useState, useEffect, useCallback } from "react";
+import { settingsApi, categoriesApi } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -7,27 +7,282 @@ import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "../components/ui/dialog";
 import { toast } from "sonner";
-import { Save, Building2, FileText, Package, Loader2, Plus, X } from "lucide-react";
+import { 
+    Save, 
+    Building2, 
+    FileText, 
+    Package, 
+    Loader2, 
+    Plus, 
+    X, 
+    GripVertical, 
+    Pencil, 
+    Trash2,
+    Tags,
+    ChevronRight,
+    ChevronDown
+} from "lucide-react";
+
+// Category Form Component
+const CategoryForm = ({ category, onSave, onCancel, parentCategories }) => {
+    const [formData, setFormData] = useState({
+        name: category?.name || "",
+        parent_id: category?.parent_id || null,
+        color: category?.color || "#005f73",
+        default_vat_percent: category?.default_vat_percent || 22.0,
+        description: category?.description || "",
+        position: category?.position || 0,
+    });
+    const [saving, setSaving] = useState(false);
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.name.trim()) {
+            toast.error("Inserisci il nome della categoria");
+            return;
+        }
+        setSaving(true);
+        try {
+            await onSave(formData);
+        } finally {
+            setSaving(false);
+        }
+    };
+    
+    const colorOptions = [
+        "#4CAF50", "#2196F3", "#FF9800", "#795548", "#607D8B",
+        "#9C27B0", "#00BCD4", "#8BC34A", "#E91E63", "#FFC107",
+        "#3F51B5", "#F44336", "#009688", "#673AB7", "#CDDC39"
+    ];
+    
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <Label>Nome Categoria *</Label>
+                <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Es: Pittura Interni"
+                    data-testid="category-name-input"
+                />
+            </div>
+            
+            <div className="space-y-2">
+                <Label>Categoria Padre (opzionale)</Label>
+                <select
+                    className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                    value={formData.parent_id || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, parent_id: e.target.value || null }))}
+                >
+                    <option value="">Nessuna (categoria principale)</option>
+                    {parentCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                </select>
+            </div>
+            
+            <div className="space-y-2">
+                <Label>Colore Tag</Label>
+                <div className="flex flex-wrap gap-2">
+                    {colorOptions.map((color) => (
+                        <button
+                            key={color}
+                            type="button"
+                            className={`w-8 h-8 rounded-md border-2 transition-all ${
+                                formData.color === color ? 'border-foreground scale-110' : 'border-transparent'
+                            }`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => setFormData(prev => ({ ...prev, color }))}
+                        />
+                    ))}
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>IVA Default (%)</Label>
+                    <Input
+                        type="number"
+                        step="0.1"
+                        value={formData.default_vat_percent}
+                        onChange={(e) => setFormData(prev => ({ ...prev, default_vat_percent: parseFloat(e.target.value) || 22 }))}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label>Posizione</Label>
+                    <Input
+                        type="number"
+                        value={formData.position}
+                        onChange={(e) => setFormData(prev => ({ ...prev, position: parseInt(e.target.value) || 0 }))}
+                    />
+                </div>
+            </div>
+            
+            <div className="space-y-2">
+                <Label>Descrizione</Label>
+                <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descrizione opzionale..."
+                    rows={2}
+                />
+            </div>
+            
+            <DialogFooter>
+                <Button type="button" variant="outline" onClick={onCancel}>
+                    Annulla
+                </Button>
+                <Button type="submit" disabled={saving} data-testid="category-save-btn">
+                    {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {category ? "Salva Modifiche" : "Crea Categoria"}
+                </Button>
+            </DialogFooter>
+        </form>
+    );
+};
+
+// Draggable Category Item
+const CategoryItem = ({ category, subCategories, onEdit, onDelete, onDragStart, onDragOver, onDrop, isDragging }) => {
+    const [expanded, setExpanded] = useState(true);
+    const hasSubCategories = subCategories && subCategories.length > 0;
+    
+    return (
+        <div
+            draggable
+            onDragStart={(e) => onDragStart(e, category)}
+            onDragOver={(e) => onDragOver(e, category)}
+            onDrop={(e) => onDrop(e, category)}
+            className={`border rounded-lg bg-card transition-all ${isDragging ? 'opacity-50' : ''}`}
+            data-testid={`category-item-${category.id}`}
+        >
+            <div className="flex items-center gap-3 p-3">
+                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                <div
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: category.color }}
+                />
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        {hasSubCategories && (
+                            <button
+                                type="button"
+                                onClick={() => setExpanded(!expanded)}
+                                className="p-0.5 hover:bg-muted rounded"
+                            >
+                                {expanded ? (
+                                    <ChevronDown className="w-4 h-4" />
+                                ) : (
+                                    <ChevronRight className="w-4 h-4" />
+                                )}
+                            </button>
+                        )}
+                        <span className="font-medium truncate">{category.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                            IVA {category.default_vat_percent}%
+                        </Badge>
+                    </div>
+                    {category.description && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            {category.description}
+                        </p>
+                    )}
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => onEdit(category)}
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => onDelete(category)}
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
+            
+            {/* Sub-categories */}
+            {hasSubCategories && expanded && (
+                <div className="ml-8 border-t">
+                    {subCategories.map((subCat) => (
+                        <div
+                            key={subCat.id}
+                            className="flex items-center gap-3 p-2 border-b last:border-b-0"
+                        >
+                            <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: subCat.color }}
+                            />
+                            <span className="flex-1 text-sm">{subCat.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                                IVA {subCat.default_vat_percent}%
+                            </Badge>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => onEdit(subCat)}
+                            >
+                                <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-destructive"
+                                onClick={() => onDelete(subCat)}
+                            >
+                                <Trash2 className="w-3 h-3" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState(null);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [newCategory, setNewCategory] = useState("");
     const [newUnit, setNewUnit] = useState("");
     const [newVatRate, setNewVatRate] = useState("");
+    
+    // Category management
+    const [categoryDialog, setCategoryDialog] = useState({ open: false, category: null });
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, category: null });
+    const [draggedCategory, setDraggedCategory] = useState(null);
 
     useEffect(() => {
-        loadSettings();
+        loadData();
     }, []);
-
-    const loadSettings = async () => {
+    
+    const loadData = async () => {
         try {
-            const response = await settingsApi.get();
-            setSettings(response.data);
+            const [settingsRes, categoriesRes] = await Promise.all([
+                settingsApi.get(),
+                categoriesApi.getAll(),
+            ]);
+            setSettings(settingsRes.data);
+            setCategories(categoriesRes.data);
         } catch (error) {
-            toast.error("Errore nel caricamento delle impostazioni");
+            toast.error("Errore nel caricamento dei dati");
         } finally {
             setLoading(false);
         }
@@ -48,22 +303,68 @@ export default function SettingsPage() {
             setSaving(false);
         }
     };
-
-    const addCategory = () => {
-        if (newCategory && !settings.categories.includes(newCategory)) {
-            setSettings((prev) => ({
-                ...prev,
-                categories: [...prev.categories, newCategory],
-            }));
-            setNewCategory("");
+    
+    // Category handlers
+    const handleSaveCategory = async (formData) => {
+        try {
+            if (categoryDialog.category) {
+                await categoriesApi.update(categoryDialog.category.id, formData);
+                toast.success("Categoria aggiornata");
+            } else {
+                await categoriesApi.create(formData);
+                toast.success("Categoria creata");
+            }
+            setCategoryDialog({ open: false, category: null });
+            loadData();
+        } catch (error) {
+            toast.error("Errore nel salvataggio della categoria");
         }
     };
-
-    const removeCategory = (cat) => {
-        setSettings((prev) => ({
-            ...prev,
-            categories: prev.categories.filter((c) => c !== cat),
-        }));
+    
+    const handleDeleteCategory = async () => {
+        if (!deleteDialog.category) return;
+        try {
+            await categoriesApi.delete(deleteDialog.category.id);
+            toast.success("Categoria eliminata");
+            setDeleteDialog({ open: false, category: null });
+            loadData();
+        } catch (error) {
+            toast.error(error.response?.data?.detail || "Errore nell'eliminazione");
+        }
+    };
+    
+    // Drag and drop handlers
+    const handleDragStart = (e, category) => {
+        setDraggedCategory(category);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+    
+    const handleDragOver = (e, category) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+    
+    const handleDrop = async (e, targetCategory) => {
+        e.preventDefault();
+        if (!draggedCategory || draggedCategory.id === targetCategory.id) {
+            setDraggedCategory(null);
+            return;
+        }
+        
+        // Swap positions
+        const newPositions = {};
+        newPositions[draggedCategory.id] = targetCategory.position;
+        newPositions[targetCategory.id] = draggedCategory.position;
+        
+        try {
+            await categoriesApi.reorder(newPositions);
+            loadData();
+            toast.success("Ordine aggiornato");
+        } catch (error) {
+            toast.error("Errore nel riordinamento");
+        }
+        
+        setDraggedCategory(null);
     };
 
     const addUnit = () => {
@@ -100,6 +401,10 @@ export default function SettingsPage() {
             default_vat_rates: prev.default_vat_rates.filter((r) => r !== rate),
         }));
     };
+    
+    // Organize categories by parent
+    const mainCategories = categories.filter(c => !c.parent_id).sort((a, b) => a.position - b.position);
+    const getSubCategories = (parentId) => categories.filter(c => c.parent_id === parentId).sort((a, b) => a.position - b.position);
 
     if (loading) {
         return (
@@ -134,6 +439,10 @@ export default function SettingsPage() {
                     <TabsTrigger value="company">
                         <Building2 className="w-4 h-4 mr-2" />
                         Azienda
+                    </TabsTrigger>
+                    <TabsTrigger value="categories">
+                        <Tags className="w-4 h-4 mr-2" />
+                        Categorie
                     </TabsTrigger>
                     <TabsTrigger value="documents">
                         <FileText className="w-4 h-4 mr-2" />
@@ -266,6 +575,51 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+                
+                {/* Categories Tab - NEW */}
+                <TabsContent value="categories" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="font-heading">Gestore Categorie</CardTitle>
+                                    <CardDescription>
+                                        Trascina per riordinare. Le categorie possono avere sotto-categorie.
+                                    </CardDescription>
+                                </div>
+                                <Button onClick={() => setCategoryDialog({ open: true, category: null })} data-testid="new-category-btn">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Nuova Categoria
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {mainCategories.length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <Tags className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                                        <p>Nessuna categoria creata</p>
+                                        <p className="text-sm">Aggiungi la prima categoria per organizzare i tuoi preventivi</p>
+                                    </div>
+                                ) : (
+                                    mainCategories.map((category) => (
+                                        <CategoryItem
+                                            key={category.id}
+                                            category={category}
+                                            subCategories={getSubCategories(category.id)}
+                                            onEdit={(cat) => setCategoryDialog({ open: true, category: cat })}
+                                            onDelete={(cat) => setDeleteDialog({ open: true, category: cat })}
+                                            onDragStart={handleDragStart}
+                                            onDragOver={handleDragOver}
+                                            onDrop={handleDrop}
+                                            isDragging={draggedCategory?.id === category.id}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
                 {/* Documents Tab */}
                 <TabsContent value="documents" className="space-y-6">
@@ -342,45 +696,35 @@ export default function SettingsPage() {
                             </div>
                         </CardContent>
                     </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-heading">Timeout Inattività</CardTitle>
+                            <CardDescription>
+                                Tempo di inattività prima del logout automatico
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center gap-4">
+                                <Input
+                                    type="number"
+                                    min={5}
+                                    max={480}
+                                    value={settings?.inactivity_timeout_minutes || 30}
+                                    onChange={(e) => handleChange("inactivity_timeout_minutes", parseInt(e.target.value) || 30)}
+                                    className="w-24"
+                                />
+                                <span className="text-muted-foreground">minuti</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Gli utenti con "Ricordami" attivo non saranno disconnessi per inattività.
+                            </p>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 {/* Parameters Tab */}
                 <TabsContent value="parameters" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-heading">Categorie Lavori</CardTitle>
-                            <CardDescription>
-                                Categorie disponibili per le voci dei preventivi
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex flex-wrap gap-2">
-                                {settings?.categories?.map((cat) => (
-                                    <Badge key={cat} variant="secondary" className="text-sm py-1 px-3">
-                                        {cat}
-                                        <button
-                                            onClick={() => removeCategory(cat)}
-                                            className="ml-2 hover:text-destructive"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </Badge>
-                                ))}
-                            </div>
-                            <div className="flex gap-2">
-                                <Input
-                                    value={newCategory}
-                                    onChange={(e) => setNewCategory(e.target.value)}
-                                    placeholder="Nuova categoria..."
-                                    onKeyDown={(e) => e.key === "Enter" && addCategory()}
-                                />
-                                <Button onClick={addCategory} variant="secondary">
-                                    <Plus className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
                     <Card>
                         <CardHeader>
                             <CardTitle className="font-heading">Unità di Misura</CardTitle>
@@ -447,6 +791,53 @@ export default function SettingsPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+            
+            {/* Category Create/Edit Dialog */}
+            <Dialog open={categoryDialog.open} onOpenChange={(open) => setCategoryDialog({ open, category: null })}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="font-heading">
+                            {categoryDialog.category ? "Modifica Categoria" : "Nuova Categoria"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {categoryDialog.category 
+                                ? "Modifica i dati della categoria" 
+                                : "Crea una nuova categoria per organizzare le voci dei preventivi"}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <CategoryForm
+                        category={categoryDialog.category}
+                        parentCategories={mainCategories.filter(c => c.id !== categoryDialog.category?.id)}
+                        onSave={handleSaveCategory}
+                        onCancel={() => setCategoryDialog({ open: false, category: null })}
+                    />
+                </DialogContent>
+            </Dialog>
+            
+            {/* Delete Category Confirmation */}
+            <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, category: null })}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Conferma Eliminazione</DialogTitle>
+                        <DialogDescription>
+                            Sei sicuro di voler eliminare la categoria "{deleteDialog.category?.name}"?
+                            {getSubCategories(deleteDialog.category?.id || '').length > 0 && (
+                                <span className="block mt-2 text-amber-600">
+                                    Attenzione: verranno eliminate anche le sotto-categorie.
+                                </span>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteDialog({ open: false, category: null })}>
+                            Annulla
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteCategory} data-testid="confirm-delete-category-btn">
+                            Elimina
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
