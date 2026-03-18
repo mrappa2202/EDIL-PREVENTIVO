@@ -1,6 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, dialog, shell } = require('electron');
 const path = require('path');
-const { spawn, exec } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const Store = require('electron-store');
 
@@ -9,7 +9,7 @@ const store = new Store({
     defaults: {
         isFirstRun: true,
         backupEnabled: true,
-        backupInterval: 24, // hours
+        backupInterval: 24,
         lastBackup: null,
         windowBounds: { width: 1400, height: 900 }
     }
@@ -26,9 +26,13 @@ let isQuitting = false;
 const isDev = !app.isPackaged;
 const resourcesPath = isDev ? __dirname : process.resourcesPath;
 const userDataPath = app.getPath('userData');
-const backendPath = path.join(resourcesPath, 'backend');
 const dbPath = path.join(userDataPath, 'preventivi.db');
 const backupDir = path.join(userDataPath, 'backups');
+
+// Backend executable path (PyInstaller generated)
+const backendExePath = isDev 
+    ? path.join(__dirname, 'backend', 'dist', 'preventivi-backend.exe')
+    : path.join(resourcesPath, 'backend', 'preventivi-backend.exe');
 
 // Ensure directories exist
 function ensureDirectories() {
@@ -85,13 +89,11 @@ function createMainWindow() {
         mainWindow.loadFile(path.join(__dirname, 'frontend-build', 'index.html'));
     }
 
-    // Save window size on close
     mainWindow.on('close', (event) => {
         if (!isQuitting) {
             event.preventDefault();
             mainWindow.hide();
             
-            // Show tray notification first time
             if (tray) {
                 tray.displayBalloon({
                     title: 'Preventivi Pittura Edile',
@@ -122,9 +124,17 @@ function createMainWindow() {
 // Create system tray
 function createTray() {
     const iconPath = path.join(__dirname, 'icon.ico');
-    const icon = nativeImage.createFromPath(iconPath);
+    let icon;
     
-    tray = new Tray(icon.resize({ width: 16, height: 16 }));
+    try {
+        icon = nativeImage.createFromPath(iconPath);
+        icon = icon.resize({ width: 16, height: 16 });
+    } catch (e) {
+        console.log('Icon not found, using default');
+        icon = nativeImage.createEmpty();
+    }
+    
+    tray = new Tray(icon);
     
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -144,6 +154,10 @@ function createTray() {
         {
             label: 'Apri Cartella Backup',
             click: () => shell.openPath(backupDir)
+        },
+        {
+            label: 'Apri Cartella Dati',
+            click: () => shell.openPath(userDataPath)
         },
         { type: 'separator' },
         {
@@ -166,27 +180,33 @@ function createTray() {
     });
 }
 
-// Start backend server
+// Start backend server (STANDALONE EXE VERSION)
 function startBackend() {
     return new Promise((resolve, reject) => {
-        const pythonPath = process.platform === 'win32' ? 'python' : 'python3';
-        const serverPath = path.join(backendPath, 'server.py');
+        console.log('Starting backend server (standalone)...');
+        console.log('Backend path:', backendExePath);
+        console.log('DB path:', dbPath);
+        
+        // Check if backend exists
+        if (!fs.existsSync(backendExePath)) {
+            const error = new Error(`Backend non trovato: ${backendExePath}`);
+            console.error(error.message);
+            reject(error);
+            return;
+        }
         
         // Set environment variables
         const env = {
             ...process.env,
             DB_PATH: dbPath,
-            PYTHONUNBUFFERED: '1'
+            HOST: '127.0.0.1',
+            PORT: '8001'
         };
         
-        console.log('Starting backend server...');
-        console.log('Server path:', serverPath);
-        console.log('DB path:', dbPath);
-        
-        backendProcess = spawn(pythonPath, ['-m', 'uvicorn', 'server:app', '--host', '127.0.0.1', '--port', '8001'], {
-            cwd: backendPath,
+        backendProcess = spawn(backendExePath, [], {
             env: env,
-            stdio: ['ignore', 'pipe', 'pipe']
+            stdio: ['ignore', 'pipe', 'pipe'],
+            windowsHide: true
         });
         
         let started = false;
@@ -194,7 +214,7 @@ function startBackend() {
         backendProcess.stdout.on('data', (data) => {
             const output = data.toString();
             console.log('Backend:', output);
-            if (output.includes('Uvicorn running') || output.includes('Application startup complete')) {
+            if (output.includes('Uvicorn running') || output.includes('Application startup complete') || output.includes('Started server')) {
                 if (!started) {
                     started = true;
                     resolve();
@@ -203,7 +223,15 @@ function startBackend() {
         });
         
         backendProcess.stderr.on('data', (data) => {
-            console.error('Backend error:', data.toString());
+            const output = data.toString();
+            console.error('Backend stderr:', output);
+            // Uvicorn logs to stderr by default
+            if (output.includes('Uvicorn running') || output.includes('Application startup complete') || output.includes('Started server')) {
+                if (!started) {
+                    started = true;
+                    resolve();
+                }
+            }
         });
         
         backendProcess.on('error', (err) => {
@@ -214,16 +242,18 @@ function startBackend() {
         backendProcess.on('close', (code) => {
             console.log('Backend process exited with code:', code);
             if (!started) {
-                reject(new Error(`Backend failed to start (exit code: ${code})`));
+                reject(new Error(`Backend closed with code: ${code}`));
             }
         });
         
-        // Timeout after 30 seconds
+        // Timeout - try to continue anyway after 10 seconds
         setTimeout(() => {
             if (!started) {
-                resolve(); // Continue anyway, maybe server started without log
+                console.log('Backend startup timeout, attempting to continue...');
+                started = true;
+                resolve();
             }
-        }, 30000);
+        }, 10000);
     });
 }
 
@@ -231,7 +261,14 @@ function startBackend() {
 function stopBackend() {
     if (backendProcess) {
         console.log('Stopping backend server...');
-        backendProcess.kill();
+        
+        // On Windows, we need to kill the process tree
+        if (process.platform === 'win32') {
+            spawn('taskkill', ['/pid', backendProcess.pid, '/f', '/t']);
+        } else {
+            backendProcess.kill('SIGTERM');
+        }
+        
         backendProcess = null;
     }
 }
@@ -262,7 +299,6 @@ function createBackup() {
             detail: `Il backup è stato salvato in:\n${backupPath}`
         });
         
-        // Clean old backups (keep last 10)
         cleanOldBackups();
     } catch (err) {
         dialog.showMessageBox({
@@ -274,36 +310,38 @@ function createBackup() {
     }
 }
 
-// Clean old backups
+// Clean old backups (keep last 10)
 function cleanOldBackups() {
-    const files = fs.readdirSync(backupDir)
-        .filter(f => f.startsWith('preventivi-backup-'))
-        .map(f => ({
-            name: f,
-            path: path.join(backupDir, f),
-            time: fs.statSync(path.join(backupDir, f)).mtime.getTime()
-        }))
-        .sort((a, b) => b.time - a.time);
-    
-    // Keep only last 10 backups
-    if (files.length > 10) {
-        files.slice(10).forEach(f => {
-            fs.unlinkSync(f.path);
-            console.log('Deleted old backup:', f.name);
-        });
+    try {
+        const files = fs.readdirSync(backupDir)
+            .filter(f => f.startsWith('preventivi-backup-'))
+            .map(f => ({
+                name: f,
+                path: path.join(backupDir, f),
+                time: fs.statSync(path.join(backupDir, f)).mtime.getTime()
+            }))
+            .sort((a, b) => b.time - a.time);
+        
+        if (files.length > 10) {
+            files.slice(10).forEach(f => {
+                fs.unlinkSync(f.path);
+                console.log('Deleted old backup:', f.name);
+            });
+        }
+    } catch (err) {
+        console.error('Error cleaning backups:', err);
     }
 }
 
 // Auto backup scheduler
 function scheduleAutoBackup() {
     const backupEnabled = store.get('backupEnabled');
-    const backupInterval = store.get('backupInterval') * 60 * 60 * 1000; // Convert hours to ms
+    const backupInterval = store.get('backupInterval') * 60 * 60 * 1000;
     const lastBackup = store.get('lastBackup');
     
     if (backupEnabled && fs.existsSync(dbPath)) {
         const now = Date.now();
         if (!lastBackup || (now - lastBackup) > backupInterval) {
-            // Create silent backup
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const backupPath = path.join(backupDir, `preventivi-backup-${timestamp}.db`);
             try {
@@ -317,8 +355,7 @@ function scheduleAutoBackup() {
         }
     }
     
-    // Schedule next check in 1 hour
-    setTimeout(scheduleAutoBackup, 60 * 60 * 1000);
+    setTimeout(scheduleAutoBackup, 60 * 60 * 1000); // Check every hour
 }
 
 // First run setup wizard
@@ -327,7 +364,7 @@ async function showSetupWizard() {
         type: 'info',
         title: 'Benvenuto in Preventivi Pittura Edile',
         message: 'Configurazione iniziale',
-        detail: 'È la prima volta che avvii l\'applicazione.\n\nL\'applicazione creerà automaticamente:\n• Un database locale per i tuoi dati\n• Una cartella per i backup automatici\n\nI tuoi dati saranno salvati in:\n' + userDataPath,
+        detail: 'È la prima volta che avvii l\'applicazione.\n\nL\'applicazione creerà automaticamente:\n• Un database locale per i tuoi dati\n• Una cartella per i backup automatici\n\nI tuoi dati saranno salvati in:\n' + userDataPath + '\n\nNessuna installazione di software aggiuntivo è richiesta!',
         buttons: ['Continua', 'Annulla'],
         defaultId: 0,
         cancelId: 1
@@ -361,12 +398,28 @@ app.whenReady().then(async () => {
         console.log('Backend started successfully');
     } catch (err) {
         console.error('Backend startup error:', err);
-        dialog.showMessageBox({
+        
+        const result = await dialog.showMessageBox({
             type: 'error',
             title: 'Errore Avvio',
             message: 'Impossibile avviare il server backend',
-            detail: 'Assicurati che Python sia installato correttamente.\n\n' + err.message
+            detail: 'Errore: ' + err.message + '\n\nVuoi provare ad avviare comunque l\'applicazione?',
+            buttons: ['Riprova', 'Avvia Comunque', 'Esci'],
+            defaultId: 0
         });
+        
+        if (result.response === 2) {
+            app.quit();
+            return;
+        }
+        
+        if (result.response === 0) {
+            try {
+                await startBackend();
+            } catch (e) {
+                console.error('Second attempt failed:', e);
+            }
+        }
     }
     
     // Create window and tray
@@ -379,13 +432,10 @@ app.whenReady().then(async () => {
 
 // Handle all windows closed
 app.on('window-all-closed', () => {
-    // On macOS, keep app running in tray
-    if (process.platform !== 'darwin') {
-        // Don't quit, minimize to tray
-    }
+    // Keep running in tray
 });
 
-// Handle app activation (macOS)
+// Handle app activation
 app.on('activate', () => {
     if (mainWindow === null) {
         createMainWindow();
@@ -413,3 +463,14 @@ if (!gotTheLock) {
         }
     });
 }
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+    dialog.showMessageBox({
+        type: 'error',
+        title: 'Errore',
+        message: 'Si è verificato un errore imprevisto',
+        detail: error.message
+    });
+});

@@ -1,92 +1,110 @@
 # PRD - Preventivi Pittura Edile
 
-## Problema Originale
-Applicazione web full-stack per la gestione di preventivi per un'impresa di costruzioni/edile, con funzionalità offline e distribuzione desktop.
+## Applicazione Desktop Standalone per Windows
 
-## Architettura Tecnica
-- **Frontend**: React + Tailwind CSS + shadcn/ui + Zustand
-- **Backend**: FastAPI + Python + SQLite
-- **Desktop**: Electron (Windows .exe)
+### Descrizione
+Applicazione completa per la gestione di preventivi per imprese di pittura edile. 
+**Versione STANDALONE**: non richiede installazione di Python o altri software sul PC finale.
 
-## ✅ Funzionalità Completate
+---
 
-### Core App
-- [x] Autenticazione JWT con "Ricordami 30 giorni"
-- [x] Gestione sessioni (timeout inattività configurabile)
+## ✅ Funzionalità Complete
+
+### Core
+- [x] Autenticazione JWT + "Ricordami 30 giorni"
+- [x] Gestione sessioni con timeout inattività
 - [x] CRUD Clienti con Combobox (input libero)
-- [x] Costruttore Preventivi con categorie
+- [x] Costruttore Preventivi con categorie colorate
 - [x] Storico Preventivi
 - [x] Inventario Materiali con alert scorte
 - [x] Gestione Spese
 - [x] Dipendenti + Worklogs + Pagamenti
-- [x] Dashboard con statistiche
+- [x] Dashboard statistiche
 - [x] Generazione PDF
 - [x] Ricerca globale (Ctrl+K)
 - [x] Gestore Categorie drag-and-drop
 - [x] UI completamente in italiano
 
-### Desktop (Electron)
-- [x] Configurazione completa per Windows
+### Desktop (Electron + PyInstaller)
+- [x] Eseguibile standalone (no Python richiesto)
 - [x] System Tray con menu
-- [x] Backup automatici (ogni 24h)
+- [x] Backup automatici ogni 24h
 - [x] Setup Wizard primo avvio
 - [x] Single instance
-- [x] Script di build (build.bat)
-- [x] Documentazione installazione
+- [x] Icona personalizzata
+
+---
 
 ## 📁 Struttura Progetto
 
 ```
 /app/
 ├── backend/
-│   ├── server.py           # FastAPI + SQLite
+│   ├── server.py            # FastAPI + SQLite
+│   ├── backend.spec         # Config PyInstaller
 │   └── requirements.txt
 ├── frontend/
-│   ├── src/
-│   │   ├── pages/          # Pagine React
-│   │   ├── components/     # Componenti UI
-│   │   ├── store/          # Zustand stores
-│   │   └── lib/            # API client
-│   └── package.json
+│   └── src/                  # React app
 ├── electron/
-│   ├── main.js             # Entry point Electron
-│   ├── preload.js          # Bridge sicuro
-│   ├── splash.html         # Splash screen
-│   ├── package.json        # Config electron-builder
-│   ├── build.bat           # Script Windows
-│   ├── build.sh            # Script Linux/Mac
-│   ├── INSTALLAZIONE_WINDOWS.md  # Guida dettagliata
-│   ├── GUIDA_RAPIDA.md     # Quick start
-│   └── COME_CREARE_ICONA.md
+│   ├── main.js              # Entry point Electron
+│   ├── preload.js           # Bridge sicuro
+│   ├── splash.html          # Splash screen
+│   ├── icon.ico             # Icona Windows
+│   ├── icon_original.png    # Icona sorgente
+│   ├── package.json         # Config electron-builder
+│   ├── build-standalone.bat # ⭐ Script build Windows
+│   ├── build-standalone.sh  # Script build Linux/Mac
+│   ├── INSTALLAZIONE_WINDOWS.md
+│   ├── GUIDA_RAPIDA.md
+│   └── LICENSE.txt
 └── memory/
     └── PRD.md
 ```
 
-## 🚀 Come Generare l'EXE
+---
 
-### Prerequisiti
-1. Node.js 18+ (https://nodejs.org/)
-2. Python 3.10+ (https://python.org/) - con PATH!
-3. Dipendenze Python:
-   ```
-   pip install fastapi uvicorn aiosqlite pyjwt python-multipart reportlab python-dateutil
-   ```
+## 🚀 Come Generare l'EXE Standalone
 
-### Build
+### Sul PC di sviluppo (una volta sola):
+
 ```cmd
-cd C:\percorso\progetto
-electron\build.bat
+cd C:\progetto
+electron\build-standalone.bat
 ```
 
-### Output
+### Output:
+- `electron\dist\PreventiviPittura-Standalone-1.0.0.exe` (Portable)
 - `electron\dist\Preventivi Pittura Edile Setup 1.0.0.exe` (Installer)
-- `electron\dist\PreventiviPittura-Portable-1.0.0.exe` (Portable)
 
-## 🔑 Credenziali Test
+### Sul PC finale:
+1. Copia l'EXE
+2. Doppio click
+3. **FATTO** - Nessun altro software richiesto!
+
+---
+
+## 🔑 Credenziali
 - Username: `admin`
 - Password: `admin123`
 
-## 📋 Backlog
+---
+
+## 📋 Requisiti
+
+### Per il BUILD:
+- Node.js 18+
+- Python 3.10+
+- 10-15 minuti
+
+### Per l'USO FINALE:
+- Windows 10/11 64-bit
+- 300 MB spazio disco
+- **NIENT'ALTRO!**
+
+---
+
+## 📦 Backlog Futuro
 - [ ] Modifica in linea tabelle preventivi
 - [ ] Avviso modifiche non salvate
 - [ ] Export CSV/Excel
+- [ ] Sincronizzazione cloud (opzionale)

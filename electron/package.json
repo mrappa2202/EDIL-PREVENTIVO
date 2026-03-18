@@ -1,7 +1,7 @@
 {
   "name": "preventivi-pittura-edile",
   "version": "1.0.0",
-  "description": "Gestione Preventivi per Imprese di Pittura Edile",
+  "description": "Gestione Preventivi per Imprese di Pittura Edile - Standalone",
   "main": "main.js",
   "author": "Pittura Edile S.r.l.",
   "license": "MIT",
@@ -22,14 +22,12 @@
       "preload.js",
       "splash.html",
       "icon.ico",
-      "backend/**/*",
       "frontend-build/**/*"
     ],
     "extraResources": [
       {
-        "from": "backend",
-        "to": "backend",
-        "filter": ["**/*", "!__pycache__/**", "!*.pyc"]
+        "from": "backend/dist/preventivi-backend.exe",
+        "to": "backend/preventivi-backend.exe"
       }
     ],
     "win": {
@@ -59,7 +57,7 @@
       "runAfterFinish": true
     },
     "portable": {
-      "artifactName": "PreventiviPittura-Portable-${version}.${ext}"
+      "artifactName": "PreventiviPittura-Standalone-${version}.${ext}"
     }
   },
   "dependencies": {

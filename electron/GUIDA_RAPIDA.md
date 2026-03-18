@@ -1,36 +1,34 @@
-# ⚡ Guida Rapida - Installazione in 5 Minuti
+# ⚡ Guida Rapida - Build Standalone
 
-## Prerequisiti (scarica e installa in ordine)
+## Sul PC dove fai il BUILD (una volta sola)
 
-1. **Node.js** → https://nodejs.org/ (versione LTS)
-2. **Python** → https://www.python.org/downloads/
-   - ⚠️ Seleziona "Add Python to PATH" durante l'installazione!
+### 1. Installa prerequisiti
+- **Node.js** → https://nodejs.org/
+- **Python** → https://www.python.org/ (seleziona "Add to PATH"!)
 
-## Comandi da Eseguire
-
-Apri il **Prompt dei comandi** (cmd) ed esegui:
-
+### 2. Esegui il build
 ```cmd
-:: 1. Installa dipendenze Python
-pip install fastapi uvicorn aiosqlite pyjwt python-multipart reportlab python-dateutil
-
-:: 2. Vai nella cartella del progetto
-cd C:\percorso\preventivi-pittura
-
-:: 3. Genera l'applicazione
-electron\build.bat
+cd C:\percorso\progetto
+electron\build-standalone.bat
 ```
 
-## Risultato
-
-Troverai gli eseguibili in `electron\dist\`:
-- **Setup**: `Preventivi Pittura Edile Setup 1.0.0.exe`
-- **Portable**: `PreventiviPittura-Portable-1.0.0.exe`
-
-## Primo Accesso
-
-- **Username**: `admin`
-- **Password**: `admin123`
+### 3. Prendi gli EXE
+Trovi i file in `electron\dist\`:
+- **Portable**: `PreventiviPittura-Standalone-1.0.0.exe`
+- **Installer**: `Preventivi Pittura Edile Setup 1.0.0.exe`
 
 ---
-Per istruzioni dettagliate, vedi `INSTALLAZIONE_WINDOWS.md`
+
+## Sul PC FINALE (dove usi l'app)
+
+### NON serve installare nulla!
+
+1. Copia l'EXE sul PC
+2. Doppio click
+3. Usa l'app
+
+**Credenziali**: `admin` / `admin123`
+
+---
+
+Per dettagli completi vedi `INSTALLAZIONE_WINDOWS.md`
