@@ -9,11 +9,14 @@
     "start": "electron .",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
+    "build:nsis": "electron-builder --win nsis",
     "build:portable": "electron-builder --win portable"
   },
   "build": {
     "appId": "com.pitturaedile.preventivi",
     "productName": "Preventivi Pittura Edile",
+    "compression": "maximum",
+    "removePackageScripts": true,
     "directories": {
       "output": "dist"
     },
@@ -43,11 +46,18 @@
         }
       ],
       "icon": "icon.ico",
-      "publisherName": "Pittura Edile S.r.l."
+      "publisherName": "Pittura Edile S.r.l.",
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "allowElevation": true,
+      "unicode": true,
+      "include": "installer.nsh",
+      "deleteAppDataOnUninstall": false,
+      "menuCategory": "Pittura Edile",
       "installerIcon": "icon.ico",
       "uninstallerIcon": "icon.ico",
       "installerHeaderIcon": "icon.ico",
@@ -55,7 +65,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Preventivi Pittura",
       "license": "LICENSE.txt",
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "artifactName": "PreventiviPittura-Setup-${version}.${ext}"
     },
     "portable": {
       "artifactName": "PreventiviPittura-Standalone-${version}.${ext}"
